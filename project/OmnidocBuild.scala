@@ -3,7 +3,7 @@ import sbt.Keys._
 
 object OmnidocBuild extends Build {
 
-  val playVersion = "2.4.0-M1"
+  val playVersion = "2.4-SNAPSHOT"
 
   val playOrganisation = "com.typesafe.play"
 
@@ -27,14 +27,19 @@ object OmnidocBuild extends Build {
 
   val Omnidoc = config("omnidoc")
 
-  val scaladoc         = TaskKey[File]("scaladoc")
-  val javadoc          = TaskKey[File]("javadoc")
   val dependencyFilter = SettingKey[DependencyFilter]("dependencyFilter")
+  val extractedSources = TaskKey[Seq[Extracted]]("extractedSources")
+  val sourceUrls       = TaskKey[Map[String, String]]("sourceUrls")
+  val javadoc          = TaskKey[File]("javadoc")
+  val scaladoc         = TaskKey[File]("scaladoc")
 
-  val sourcesFilter = moduleFilter(
-    organization = playOrganisation,
-    name = excludeArtifacts.foldLeft(AllPassFilter: NameFilter)(_ - _)
-  ) && artifactFilter(classifier = "sources")
+  val nameFilter = excludeArtifacts.foldLeft(AllPassFilter: NameFilter)(_ - _)
+
+  val sourcesFilter = {
+    moduleFilter(organization = playOrganisation, name = nameFilter) &&
+    configurationFilter("compile") &&
+    artifactFilter(classifier = "sources")
+  }
 
   lazy val omnidoc = project
     .in(file("."))
@@ -44,9 +49,9 @@ object OmnidocBuild extends Build {
   def omnidocSettings: Seq[Setting[_]] =
     projectSettings ++
     inConfig(Omnidoc) {
-      omnidocScoped ++
-      Defaults.docTaskSettings(scaladoc) ++
-      Defaults.docTaskSettings(javadoc)
+      extractSettings ++
+      scaladocSettings ++
+      javadocSettings
     }
 
   def projectSettings: Seq[Setting[_]] = Seq(
@@ -54,51 +59,58 @@ object OmnidocBuild extends Build {
              scalaVersion :=  playScalaVersion,
                 resolvers +=  Resolver.typesafeRepo("releases"),
       libraryDependencies ++= playProjects map (playOrganisation %% _ % playVersion),
-    transitiveClassifiers :=  Seq(Artifact.SourceClassifier)
+    transitiveClassifiers :=  Seq(Artifact.SourceClassifier),
+               initialize :=  { PomParser.registerParser }
   )
 
-  def omnidocScoped: Seq[Setting[_]] = Seq(
-          dependencyClasspath := (dependencyClasspath in Compile).value,
-             dependencyFilter := sourcesFilter,
-                      sources := extractSources.value,
+  def extractSettings: Seq[Setting[_]] = Seq(
+                 target := target.value / "omnidoc",
+      target in sources := target.value / "sources",
+       dependencyFilter := sourcesFilter,
+       extractedSources := extractSources.value,
+                sources := extractedSources.value.map(_.dir),
+             sourceUrls := getSourceUrls(extractedSources.value),
+    dependencyClasspath := (dependencyClasspath in Compile).value
+  )
+
+  def scaladocSettings: Seq[Setting[_]] = Defaults.docTaskSettings(scaladoc) ++ Seq(
           sources in scaladoc := (sources.value ** "*.scala").get,
-           sources in javadoc := (sources.value ** "*.java").get,
-                       target := target.value / "omnidoc",
-            target in sources := target.value / "sources",
            target in scaladoc := target.value / "api" / "scala",
-            target in javadoc := target.value / "api" / "java",
     scalacOptions in scaladoc := scaladocOptions.value,
-      javacOptions in javadoc := javadocOptions.value
+                     scaladoc := rewriteSourceUrls(scaladoc.value, sourceUrls.value, "/src/main/scala", ".scala")
   )
 
-  // returns a sequence of directories containing each artifact's extracted sources
+  def javadocSettings: Seq[Setting[_]] = Defaults.docTaskSettings(javadoc) ++ Seq(
+         sources in javadoc := (sources.value ** "*.java").get,
+          target in javadoc := target.value / "api" / "java",
+    javacOptions in javadoc := javadocOptions.value
+  )
+
   def extractSources = Def.task {
     val log          = streams.value.log
     val cacheDir     = streams.value.cacheDirectory
     val targetDir    = (target in sources).value
-    val dependencies = (updateClassifiers.value matching dependencyFilter.value).toSet
-    val extract = FileFunction.cached(cacheDir / "extract-sources", FilesInfo.hash) { _ =>
-      log.info("Extracting sources...")
-      IO.delete(targetDir)
-      dependencies map { file =>
-        val extracted = targetDir / file.name
-        log.debug("  from: " + file.name)
-        IO.unzip(file, extracted)
-        extracted
-      }
+    val dependencies = (updateClassifiers.value filter dependencyFilter.value).toSeq
+    log.info("Extracting sources...")
+    IO.delete(targetDir)
+    dependencies map { case (conf, module, artifact, file) =>
+      val name = s"${module.organization}-${module.name}-${module.revision}"
+      val dir = targetDir / name
+      log.debug(s"Extracting $name")
+      IO.unzip(file, dir)
+      val sourceUrl = module.extraAttributes.get(SourceUrlKey)
+      if (sourceUrl.isEmpty) log.warn(s"Source url not found for ${module.name}")
+      Extracted(dir, sourceUrl)
     }
-    extract(dependencies).toSeq
   }
 
   def scaladocOptions = Def.task {
-    // val sourcepath = (target in sources).value.getAbsolutePath
-    // val tree = if (isSnapshot.value) "master" else version.value
-    // val docSourceUrl = s"https://github.com/playframework/playframework/tree/${tree}/framework€{FILE_PATH}.scala"
-    // Seq(
-    //   "-sourcepath", sourcepath,
-    //   "-doc-source-url", docSourceUrl
-    // )
-    Seq.empty[String]
+    val sourcepath   = (target in sources).value.getAbsolutePath
+    val docSourceUrl = sourceUrlMarker("€{FILE_PATH}")
+    Seq(
+      "-sourcepath", sourcepath,
+      "-doc-source-url", docSourceUrl
+    )
   }
 
   def javadocOptions = Def.task {
@@ -109,6 +121,66 @@ object OmnidocBuild extends Build {
       "-subpackages", "play",
       "-exclude", "play.api:play.core"
     )
+  }
+
+  // Source linking
+
+  case class Extracted(dir: File, url: Option[String])
+
+  val SourceUrlKey = "info.sourceUrl"
+
+  val NoSourceUrl = "javascript:;"
+
+  // first part of path is the extracted directory name, which is used as the source url mapping key
+  val SourceUrlRegex = sourceUrlMarker("/([^/\\s]*)(/\\S*)").r
+
+  def sourceUrlMarker(path: String): String = s"http://%SOURCE;${path}%"
+
+  def getSourceUrls(extracted: Seq[Extracted]): Map[String, String] = {
+    (extracted flatMap { source => source.url map source.dir.name.-> }).toMap
+  }
+
+  def rewriteSourceUrls(baseDir: File, sourceUrls: Map[String, String], prefix: String, suffix: String): File = {
+    val files = baseDir.***.filter(!_.isDirectory).get
+    files foreach { file =>
+      val contents = IO.read(file)
+      val newContents = SourceUrlRegex.replaceAllIn(contents, matched => {
+        val key  = matched.group(1)
+        val path = matched.group(2)
+        sourceUrls.get(key).fold(NoSourceUrl)(_ + prefix + path + suffix)
+      })
+      if (newContents != contents) {
+        IO.write(file, newContents)
+      }
+    }
+    baseDir
+  }
+
+  object PomParser {
+
+    import org.apache.ivy.core.module.descriptor.ModuleDescriptor
+    import org.apache.ivy.plugins.parser.{ ModuleDescriptorParser, ModuleDescriptorParserRegistry }
+    import org.apache.ivy.plugins.parser.m2.PomModuleDescriptorBuilder
+
+    val extraKeys = Set(SourceUrlKey)
+
+    val extraParser = new CustomPomParser(CustomPomParser.default, addExtra)
+
+    def registerParser = ModuleDescriptorParserRegistry.getInstance.addParser(extraParser)
+
+    def addExtra(parser: ModuleDescriptorParser, descriptor: ModuleDescriptor): ModuleDescriptor = {
+      val properties = getExtraProperties(descriptor, extraKeys)
+      CustomPomParser.addExtra(properties, Map.empty, parser, descriptor)
+    }
+
+    def getExtraProperties(descriptor: ModuleDescriptor, keys: Set[String]): Map[String, String] = {
+      import scala.collection.JavaConverters._
+      PomModuleDescriptorBuilder.extractPomProperties(descriptor.getExtraInfo)
+        .asInstanceOf[java.util.Map[String, String]].asScala.toMap
+        .filterKeys(keys)
+        .map { case (k, v) => ("e:" + k, v) }
+    }
+
   }
 
 }
