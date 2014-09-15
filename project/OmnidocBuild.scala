@@ -31,10 +31,13 @@ object OmnidocBuild extends Build {
 
   val Omnidoc = config("omnidoc")
 
+  val PlaydocClassifier = "playdoc"
+
   val extractedSources = TaskKey[Seq[Extracted]]("extractedSources")
   val sourceUrls       = TaskKey[Map[String, String]]("sourceUrls")
   val javadoc          = TaskKey[File]("javadoc")
   val scaladoc         = TaskKey[File]("scaladoc")
+  val playdoc          = TaskKey[File]("playdoc")
 
   lazy val omnidoc = project
     .in(file("."))
@@ -59,8 +62,8 @@ object OmnidocBuild extends Build {
   )
 
   def updateSettings: Seq[Setting[_]] = Seq(
-    transitiveClassifiers :=  Seq(SourceClassifier),
-        updateClassifiers <<= updateClassifiersTask
+    transitiveClassifiers := Seq(SourceClassifier, PlaydocClassifier),
+        updateClassifiers := updateClassifiersTask.value
   )
 
   def extractSettings: Seq[Setting[_]] = Seq(
@@ -69,7 +72,9 @@ object OmnidocBuild extends Build {
        extractedSources := extractSources.value,
                 sources := extractedSources.value.map(_.dir),
              sourceUrls := getSourceUrls(extractedSources.value),
-    dependencyClasspath := Classpaths.managedJars(configuration.value, classpathTypes.value, update.value)
+    dependencyClasspath := Classpaths.managedJars(configuration.value, classpathTypes.value, update.value),
+      target in playdoc := target.value / "playdocs",
+                playdoc := extractPlaydocs.value
   )
 
   def scaladocSettings: Seq[Setting[_]] = Defaults.docTaskSettings(scaladoc) ++ Seq(
@@ -94,7 +99,6 @@ object OmnidocBuild extends Build {
 
   def extractSources = Def.task {
     val log          = streams.value.log
-    val cacheDir     = streams.value.cacheDirectory
     val targetDir    = (target in sources).value
     val dependencies = (updateClassifiers.value filter artifactFilter(classifier = SourceClassifier)).toSeq
     log.info("Extracting sources...")
@@ -108,6 +112,19 @@ object OmnidocBuild extends Build {
       if (sourceUrl.isEmpty) log.warn(s"Source url not found for ${module.name}")
       Extracted(dir, sourceUrl)
     }
+  }
+
+  def extractPlaydocs = Def.task {
+    val log          = streams.value.log
+    val targetDir    = (target in playdoc).value
+    val dependencies = updateClassifiers.value matching artifactFilter(classifier = PlaydocClassifier)
+    log.info("Extracting playdocs...")
+    IO.delete(targetDir)
+    dependencies foreach { case file =>
+      log.debug(s"Extracting $file")
+      IO.unzip(file, targetDir)
+    }
+    targetDir
   }
 
   def scaladocOptions = Def.task {
