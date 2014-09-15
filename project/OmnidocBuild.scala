@@ -90,11 +90,28 @@ object OmnidocBuild extends Build {
     javacOptions in javadoc := javadocOptions.value
   )
 
+  /**
+   * Custom update classifiers task that only resolves classifiers for Play modules.
+   * Also redirects warnings to debug for any artifacts that can't be found.
+   */
   def updateClassifiersTask = Def.task {
     val playModules       = update.value.configuration(Omnidoc.name).toSeq.flatMap(_.allModules.filter(playModuleFilter))
     val classifiersModule = GetClassifiersModule(projectID.value, playModules, Seq(Omnidoc), transitiveClassifiers.value)
     val classifiersConfig = GetClassifiersConfiguration(classifiersModule, Map.empty, updateConfiguration.value, ivyScala.value)
-    IvyActions.updateClassifiers(ivySbt.value, classifiersConfig, streams.value.log)
+    IvyActions.updateClassifiers(ivySbt.value, classifiersConfig, quietLogger(streams.value.log))
+  }
+
+  /**
+   * Redirect logging above a certain level to debug.
+   */
+  def quietLogger(underlying: Logger, minimumLevel: Level.Value = Level.Info): Logger = new Logger {
+    def log(level: Level.Value, message: => String): Unit = {
+      if (level.id > minimumLevel.id) underlying.log(Level.Debug, s"[$level] $message")
+      else underlying.log(level, message)
+    }
+    def success(message: => String): Unit = underlying.success(message)
+    def trace(t: => Throwable): Unit = underlying.trace(t)
+    override def ansiCodesSupported: Boolean = underlying.ansiCodesSupported
   }
 
   def extractSources = Def.task {
