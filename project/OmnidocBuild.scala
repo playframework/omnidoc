@@ -1,4 +1,5 @@
 import sbt._
+import sbt.Artifact.SourceClassifier
 import sbt.Keys._
 
 object OmnidocBuild extends Build {
@@ -25,52 +26,50 @@ object OmnidocBuild extends Build {
     "play-netty-utils"
   )
 
+  val nameFilter = excludeArtifacts.foldLeft(AllPassFilter: NameFilter)(_ - _)
+  val playModuleFilter = moduleFilter(organization = playOrganisation, name = nameFilter)
+
   val Omnidoc = config("omnidoc")
 
-  val dependencyFilter = SettingKey[DependencyFilter]("dependencyFilter")
   val extractedSources = TaskKey[Seq[Extracted]]("extractedSources")
   val sourceUrls       = TaskKey[Map[String, String]]("sourceUrls")
   val javadoc          = TaskKey[File]("javadoc")
   val scaladoc         = TaskKey[File]("scaladoc")
 
-  val nameFilter = excludeArtifacts.foldLeft(AllPassFilter: NameFilter)(_ - _)
-
-  val sourcesFilter = {
-    moduleFilter(organization = playOrganisation, name = nameFilter) &&
-    configurationFilter("compile") &&
-    artifactFilter(classifier = "sources")
-  }
-
   lazy val omnidoc = project
     .in(file("."))
     .settings(omnidocSettings: _*)
-    .settings(projectSettings: _*)
 
   def omnidocSettings: Seq[Setting[_]] =
     projectSettings ++
     inConfig(Omnidoc) {
+      updateSettings ++
       extractSettings ++
       scaladocSettings ++
       javadocSettings
     }
 
   def projectSettings: Seq[Setting[_]] = Seq(
-                  version :=  playVersion,
-             scalaVersion :=  playScalaVersion,
-                resolvers +=  Resolver.typesafeRepo("releases"),
-      libraryDependencies ++= playProjects map (playOrganisation %% _ % playVersion),
-    transitiveClassifiers :=  Seq(Artifact.SourceClassifier),
-               initialize :=  { PomParser.registerParser }
+                version :=  playVersion,
+           scalaVersion :=  playScalaVersion,
+              resolvers +=  Resolver.typesafeRepo("releases"),
+      ivyConfigurations +=  Omnidoc,
+    libraryDependencies ++= playProjects map (playOrganisation %% _ % playVersion % Omnidoc.name),
+             initialize :=  { PomParser.registerParser }
+  )
+
+  def updateSettings: Seq[Setting[_]] = Seq(
+    transitiveClassifiers :=  Seq(SourceClassifier),
+        updateClassifiers <<= updateClassifiersTask
   )
 
   def extractSettings: Seq[Setting[_]] = Seq(
                  target := target.value / "omnidoc",
       target in sources := target.value / "sources",
-       dependencyFilter := sourcesFilter,
        extractedSources := extractSources.value,
                 sources := extractedSources.value.map(_.dir),
              sourceUrls := getSourceUrls(extractedSources.value),
-    dependencyClasspath := (dependencyClasspath in Compile).value
+    dependencyClasspath := Classpaths.managedJars(configuration.value, classpathTypes.value, update.value)
   )
 
   def scaladocSettings: Seq[Setting[_]] = Defaults.docTaskSettings(scaladoc) ++ Seq(
@@ -86,11 +85,18 @@ object OmnidocBuild extends Build {
     javacOptions in javadoc := javadocOptions.value
   )
 
+  def updateClassifiersTask = Def.task {
+    val playModules       = update.value.configuration(Omnidoc.name).toSeq.flatMap(_.allModules.filter(playModuleFilter))
+    val classifiersModule = GetClassifiersModule(projectID.value, playModules, Seq(Omnidoc), transitiveClassifiers.value)
+    val classifiersConfig = GetClassifiersConfiguration(classifiersModule, Map.empty, updateConfiguration.value, ivyScala.value)
+    IvyActions.updateClassifiers(ivySbt.value, classifiersConfig, streams.value.log)
+  }
+
   def extractSources = Def.task {
     val log          = streams.value.log
     val cacheDir     = streams.value.cacheDirectory
     val targetDir    = (target in sources).value
-    val dependencies = (updateClassifiers.value filter dependencyFilter.value).toSeq
+    val dependencies = (updateClassifiers.value filter artifactFilter(classifier = SourceClassifier)).toSeq
     log.info("Extracting sources...")
     IO.delete(targetDir)
     dependencies map { case (conf, module, artifact, file) =>
