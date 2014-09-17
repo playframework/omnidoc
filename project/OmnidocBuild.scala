@@ -49,7 +49,8 @@ object OmnidocBuild extends Build {
       updateSettings ++
       extractSettings ++
       scaladocSettings ++
-      javadocSettings
+      javadocSettings ++
+      packageSettings
     }
 
   def projectSettings: Seq[Setting[_]] = Seq(
@@ -73,21 +74,30 @@ object OmnidocBuild extends Build {
                 sources := extractedSources.value.map(_.dir),
              sourceUrls := getSourceUrls(extractedSources.value),
     dependencyClasspath := Classpaths.managedJars(configuration.value, classpathTypes.value, update.value),
-      target in playdoc := target.value / "playdocs",
+      target in playdoc := target.value / "playdoc",
                 playdoc := extractPlaydocs.value
   )
 
   def scaladocSettings: Seq[Setting[_]] = Defaults.docTaskSettings(scaladoc) ++ Seq(
           sources in scaladoc := (sources.value ** "*.scala").get,
-           target in scaladoc := target.value / "api" / "scala",
+           target in scaladoc := target.value / "scaladoc",
     scalacOptions in scaladoc := scaladocOptions.value,
                      scaladoc := rewriteSourceUrls(scaladoc.value, sourceUrls.value, "/src/main/scala", ".scala")
   )
 
   def javadocSettings: Seq[Setting[_]] = Defaults.docTaskSettings(javadoc) ++ Seq(
          sources in javadoc := (sources.value ** "*.java").get,
-          target in javadoc := target.value / "api" / "java",
+          target in javadoc := target.value / "javadoc",
     javacOptions in javadoc := javadocOptions.value
+  )
+
+  def packageSettings: Seq[Setting[_]] = Seq(
+    mappings in (Compile, packageBin) ++= {
+      def mapped(dir: File, path: String) = dir.*** pair rebase(dir, path)
+      mapped(playdoc.value,  "play/docs/content") ++
+      mapped(scaladoc.value, "play/docs/content/api/scala") ++
+      mapped(javadoc.value,  "play/docs/content/api/java")
+    }
   )
 
   /**
