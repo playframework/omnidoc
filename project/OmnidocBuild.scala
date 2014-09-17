@@ -29,7 +29,7 @@ object OmnidocBuild extends Build {
   val nameFilter = excludeArtifacts.foldLeft(AllPassFilter: NameFilter)(_ - _)
   val playModuleFilter = moduleFilter(organization = playOrganisation, name = nameFilter)
 
-  val Omnidoc = config("omnidoc")
+  val Omnidoc = config("omnidoc").hide
 
   val PlaydocClassifier = "playdoc"
 
@@ -54,6 +54,8 @@ object OmnidocBuild extends Build {
     }
 
   def projectSettings: Seq[Setting[_]] = Seq(
+                   name :=  "play-omnidoc",
+           organization :=  playOrganisation,
                 version :=  playVersion,
            scalaVersion :=  playScalaVersion,
               resolvers +=  Resolver.typesafeRepo("releases"),
