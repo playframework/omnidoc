@@ -124,7 +124,7 @@ object OmnidocBuild extends Build {
       val name = s"${module.organization}-${module.name}-${module.revision}"
       val dir = targetDir / name
       log.debug(s"Extracting $name")
-      IO.unzip(file, dir)
+      IO.unzip(file, dir, -"META-INF*")
       val sourceUrl = module.extraAttributes.get(SourceUrlKey)
       if (sourceUrl.isEmpty) log.warn(s"Source url not found for ${module.name}")
       Extracted(dir, sourceUrl)
@@ -139,7 +139,7 @@ object OmnidocBuild extends Build {
     IO.delete(targetDir)
     dependencies foreach { case file =>
       log.debug(s"Extracting $file")
-      IO.unzip(file, targetDir)
+      IO.unzip(file, targetDir, -"META-INF*")
     }
     targetDir
   }
