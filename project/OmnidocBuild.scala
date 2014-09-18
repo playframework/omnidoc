@@ -8,8 +8,6 @@ object OmnidocBuild extends Build {
 
   val playOrganisation = "com.typesafe.play"
 
-  val playScalaVersion = "2.10.4"
-
   // these dependencies pull in all the others
   val playProjects = Seq(
     "anorm",
@@ -57,7 +55,8 @@ object OmnidocBuild extends Build {
                    name :=  "play-omnidoc",
            organization :=  playOrganisation,
                 version :=  playVersion,
-           scalaVersion :=  playScalaVersion,
+           scalaVersion :=  "2.10.4",
+     crossScalaVersions := Seq("2.10.4", "2.11.2"),
               resolvers +=  Resolver.typesafeRepo("releases"),
       ivyConfigurations +=  Omnidoc,
     libraryDependencies ++= playProjects map (playOrganisation %% _ % playVersion % Omnidoc.name),
@@ -70,7 +69,7 @@ object OmnidocBuild extends Build {
   )
 
   def extractSettings: Seq[Setting[_]] = Seq(
-                 target := target.value / "omnidoc",
+                 target := crossTarget.value / "omnidoc",
       target in sources := target.value / "sources",
        extractedSources := extractSources.value,
                 sources := extractedSources.value.map(_.dir),
