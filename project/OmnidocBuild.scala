@@ -60,11 +60,12 @@ object OmnidocBuild extends Build {
            organization :=  playOrganisation,
                 version :=  playVersion,
            scalaVersion :=  "2.10.4",
-     crossScalaVersions := Seq("2.10.4", "2.11.2"),
+     crossScalaVersions :=  Seq("2.10.4", "2.11.2"),
               resolvers +=  Resolver.typesafeRepo("releases"),
       ivyConfigurations +=  Omnidoc,
     libraryDependencies ++= playProjects map (playOrganisation %% _ % playVersion % Omnidoc.name),
     libraryDependencies ++= externalModules map (_ % Omnidoc.name),
+    libraryDependencies +=  playOrganisation %% "play-docs" % playVersion,
              initialize :=  { PomParser.registerParser }
   )
 
