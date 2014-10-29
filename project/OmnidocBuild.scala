@@ -15,13 +15,16 @@ object OmnidocBuild extends Build {
     "play-integration-test",
     "play-java-ebean",
     "play-java-jpa"
-    // TODO: play-slick (on 2.4)
   )
 
   val excludeArtifacts = Seq(
     "build-link",
     "play-exceptions",
     "play-netty-utils"
+  )
+
+  val externalModules = Seq(
+    playOrganisation %% "play-slick" % "0.9-SNAPSHOT"
   )
 
   val nameFilter = excludeArtifacts.foldLeft(AllPassFilter: NameFilter)(_ - _)
@@ -60,6 +63,7 @@ object OmnidocBuild extends Build {
               resolvers +=  Resolver.typesafeRepo("releases"),
       ivyConfigurations +=  Omnidoc,
     libraryDependencies ++= playProjects map (playOrganisation %% _ % playVersion % Omnidoc.name),
+    libraryDependencies ++= externalModules map (_ % Omnidoc.name),
              initialize :=  { PomParser.registerParser }
   )
 
