@@ -46,6 +46,7 @@ object OmnidocBuild extends Build {
 
   def omnidocSettings: Seq[Setting[_]] =
     projectSettings ++
+    localIvySettings ++
     inConfig(Omnidoc) {
       updateSettings ++
       extractSettings ++
@@ -65,6 +66,14 @@ object OmnidocBuild extends Build {
     libraryDependencies ++= playProjects map (playOrganisation %% _ % playVersion % Omnidoc.name),
     libraryDependencies ++= externalModules map (_ % Omnidoc.name),
              initialize :=  { PomParser.registerParser }
+  )
+
+  // use a project-local ivy cache so that custom pom parsing is always applied on update
+  def localIvySettings: Seq[Setting[_]] = Seq(
+    ivyPaths := new IvyPaths(baseDirectory.value, Some(target.value / "ivy")),
+    resolvers += Resolver.file("ivy-local", appConfiguration.value.provider.scalaProvider.launcher.ivyHome / "local")(Resolver.ivyStylePatterns),
+    publishLocalConfiguration ~= { c => new PublishConfiguration(c.ivyFile, resolverName = "ivy-local", c.artifacts, c.checksums, c.logging, c.overwrite) },
+    resolvers += "scalaz-releases" at "http://dl.bintray.com/scalaz/releases" // specs2 depends on scalaz-stream
   )
 
   def updateSettings: Seq[Setting[_]] = Seq(
