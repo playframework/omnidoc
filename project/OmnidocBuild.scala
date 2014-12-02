@@ -4,7 +4,7 @@ import sbt.Keys._
 
 object OmnidocBuild extends Build {
 
-  val playVersion = "2.4-SNAPSHOT"
+  val playVersion = "2.4.0-M2"
 
   val playOrganisation = "com.typesafe.play"
 
@@ -13,7 +13,6 @@ object OmnidocBuild extends Build {
     "anorm",
     "play-cache",
     "play-integration-test",
-    "play-java-ebean",
     "play-java-jpa"
   )
 
@@ -24,7 +23,8 @@ object OmnidocBuild extends Build {
   )
 
   val externalModules = Seq(
-    playOrganisation %% "play-slick" % "0.9-SNAPSHOT"
+    playOrganisation %% "play-slick" % "0.9.0-SNAPSHOT",
+    playOrganisation %% "play-ebean" % "1.0-SNAPSHOT"
   )
 
   val nameFilter = excludeArtifacts.foldLeft(AllPassFilter: NameFilter)(_ - _)
