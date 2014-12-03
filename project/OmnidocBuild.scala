@@ -23,8 +23,8 @@ object OmnidocBuild extends Build {
   )
 
   val externalModules = Seq(
-    playOrganisation %% "play-slick" % "0.9.0-SNAPSHOT",
-    playOrganisation %% "play-ebean" % "1.0-SNAPSHOT"
+    playOrganisation %% "play-slick" % "0.9.0-M3",
+    playOrganisation %% "play-ebean" % "1.0.0-M1"
   )
 
   val nameFilter = excludeArtifacts.foldLeft(AllPassFilter: NameFilter)(_ - _)
