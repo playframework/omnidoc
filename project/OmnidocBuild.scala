@@ -46,6 +46,7 @@ object OmnidocBuild extends Build {
 
   def omnidocSettings: Seq[Setting[_]] =
     projectSettings ++
+    publishSettings ++
     localIvySettings ++
     inConfig(Omnidoc) {
       updateSettings ++
@@ -67,6 +68,29 @@ object OmnidocBuild extends Build {
     libraryDependencies ++= externalModules map (_ % Omnidoc.name),
     libraryDependencies +=  playOrganisation %% "play-docs" % playVersion,
              initialize :=  { PomParser.registerParser }
+  )
+
+  def publishSettings: Seq[Setting[_]] = Seq(
+    publishTo := {
+      if (isSnapshot.value) Some(Opts.resolver.sonatypeSnapshots)
+      else Some(Opts.resolver.sonatypeStaging)
+    },
+    homepage := Some(url("https://github.com/playframework/omnidoc")),
+    licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+    pomExtra := {
+      <scm>
+        <url>https://github.com/playframework/omnidoc</url>
+        <connection>scm:git:git@github.com:playframework/omnidoc.git</connection>
+      </scm>
+      <developers>
+        <developer>
+          <id>playframework</id>
+          <name>Play Framework Team</name>
+          <url>https://github.com/playframework</url>
+        </developer>
+      </developers>
+    },
+    pomIncludeRepository := { _ => false }
   )
 
   // use a project-local ivy cache so that custom pom parsing is always applied on update
