@@ -6,6 +6,8 @@ object OmnidocBuild extends Build {
 
   val playOrganisation = "com.typesafe.play"
 
+  val snapshotVersionLabel = "2.4.x"
+
   val playVersion       = sys.props.getOrElse("play.version",       "2.4-SNAPSHOT")
   val anormVersion      = sys.props.getOrElse("anorm.version",      "2.4.0-SNAPSHOT")
   val playEbeanVersion  = sys.props.getOrElse("play-ebean.version", "1.0.0-SNAPSHOT")
@@ -208,7 +210,7 @@ object OmnidocBuild extends Build {
   }
 
   def javadocOptions = Def.task {
-    val label = "Play " + version.value
+    val label = "Play " + (if (isSnapshot.value) snapshotVersionLabel else version.value)
     Seq(
       "-windowtitle", label,
       "-notimestamp",
