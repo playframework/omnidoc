@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+
+# Deploy script for aggregated documentation
+# Note: expects that omnidoc is already built
+
+set -e
+
+# get the source location for this script; handles symlinks
+function get_script_path {
+  local source="${BASH_SOURCE[0]}"
+  while [ -h "$source" ] ; do
+    local linked="$(readlink "$source")"
+    local dir="$(cd -P $(dirname "$source") && cd -P $(dirname "$linked") && pwd)"
+    source="$dir/$(basename "$linked")"
+  done
+  echo ${source}
+}
+
+# script details
+
+declare -r script_path=$(get_script_path)
+declare -r script_name=$(basename "$script_path")
+declare -r script_dir="$(cd -P "$(dirname "$script_path")" && pwd)"
+declare -r base_dir="$(cd "$script_dir/.." && pwd)"
+
+# process arguments
+
+unset tag
+declare branch="master"
+declare -a args
+
+while [[ $# -gt 0 ]] ; do
+  case "$1" in
+    -b|--branch) branch=$2; shift 2 ;;
+    -t|--tag) tag=$2; shift 2 ;;
+    *) args=("${args[@]}" "$1"); shift ;;
+  esac
+done
+set -- "${args[@]}"
+
+repo=$1
+
+if [ -z "$repo" ] ; then
+  echo "Repository for generated documentation required"
+  echo "Usage: $script_name [--branch <branch>] [--tag <tag>] <repository>"
+  exit 1
+fi
+
+# switch to generated documentation
+
+pushd $repo
+
+declare -r remote=$(git config --get remote.origin.url)
+
+echo "Generated documentation: $repo"
+echo "Deploying to: ${remote}#${branch}"
+
+if [ -n "$tag" ] ; then
+  echo "Tagging version: $tag"
+fi
+
+# clean checkout
+
+git fetch
+git checkout $branch
+git reset --hard origin/$branch
+git clean -fxd
+
+# copy documentation
+
+declare -r omnidoc="${base_dir}/target/scala-2.11/omnidoc"
+
+if [ ! -d $omnidoc ] ; then
+  echo "Generated omnidoc not found at: $omnidoc"
+  exit 1
+fi
+
+rm -rf api/java
+rm -rf api/scala
+rm -rf manual
+cp -r $omnidoc/javadoc api/java
+cp -r $omnidoc/scaladoc api/scala
+cp -r $omnidoc/playdoc/manual manual
+
+# commit changes
+
+if ! git diff -w --quiet ; then
+  echo "Documentation has changed"
+  git add --all
+  if [ -n "$tag" ] ; then
+    git commit -m "Documentation for $tag"
+  else
+    git commit -m "Update documentation"
+  fi
+  git push origin $branch
+else
+  echo "No changes in documentation"
+fi
+
+# tag this commit if requested
+
+if [ -n "$tag" ] ; then
+  echo "Tagging documentation: $tag"
+  git tag -am "Version $tag" $tag
+  git push --tags orgin
+fi
+
+popd

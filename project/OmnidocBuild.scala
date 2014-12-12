@@ -4,13 +4,18 @@ import sbt.Keys._
 
 object OmnidocBuild extends Build {
 
-  val playVersion = "2.4.0-M2"
-
   val playOrganisation = "com.typesafe.play"
+
+  val snapshotVersionLabel = "2.4.x"
+
+  val playVersion       = sys.props.getOrElse("play.version",       "2.4-SNAPSHOT")
+  val anormVersion      = sys.props.getOrElse("anorm.version",      "2.4.0-SNAPSHOT")
+  val playEbeanVersion  = sys.props.getOrElse("play-ebean.version", "1.0.0-SNAPSHOT")
+  val playSlickVersion  = sys.props.getOrElse("play-slick.version", "0.9.0-SNAPSHOT")
+  val maybeTwirlVersion = sys.props.get("twirl.version")
 
   // these dependencies pull in all the others
   val playProjects = Seq(
-    "anorm",
     "play-cache",
     "play-integration-test",
     "play-java-jpa"
@@ -22,10 +27,17 @@ object OmnidocBuild extends Build {
     "play-netty-utils"
   )
 
-  val externalModules = Seq(
-    playOrganisation %% "play-slick" % "0.9.0-SNAPSHOT",
-    playOrganisation %% "play-ebean" % "1.0-SNAPSHOT"
+  val playModules = Seq(
+    playOrganisation %% "anorm"      % anormVersion,
+    playOrganisation %% "play-ebean" % playEbeanVersion,
+    playOrganisation %% "play-slick" % playSlickVersion
   )
+
+  val maybeTwirlModule = (maybeTwirlVersion map { twirlVersion =>
+    playOrganisation %% "twirl-api" % twirlVersion
+  }).toSeq
+
+  val externalModules = playModules ++ maybeTwirlModule
 
   val nameFilter = excludeArtifacts.foldLeft(AllPassFilter: NameFilter)(_ - _)
   val playModuleFilter = moduleFilter(organization = playOrganisation, name = nameFilter)
@@ -46,8 +58,8 @@ object OmnidocBuild extends Build {
 
   def omnidocSettings: Seq[Setting[_]] =
     projectSettings ++
+    dependencySettings ++
     publishSettings ++
-    localIvySettings ++
     inConfig(Omnidoc) {
       updateSettings ++
       extractSettings ++
@@ -57,17 +69,20 @@ object OmnidocBuild extends Build {
     }
 
   def projectSettings: Seq[Setting[_]] = Seq(
-                   name :=  "play-omnidoc",
-           organization :=  playOrganisation,
-                version :=  playVersion,
-           scalaVersion :=  "2.10.4",
-     crossScalaVersions :=  Seq("2.10.4", "2.11.2"),
+                  name :=  "play-omnidoc",
+          organization :=  playOrganisation,
+               version :=  playVersion,
+          scalaVersion :=  "2.11.4",
+    crossScalaVersions :=  Seq("2.10.4", scalaVersion.value)
+  )
+
+  def dependencySettings: Seq[Setting[_]] = Seq(
               resolvers +=  Resolver.typesafeRepo("releases"),
+              resolvers ++= DefaultOptions.resolvers(snapshot = true),
       ivyConfigurations +=  Omnidoc,
     libraryDependencies ++= playProjects map (playOrganisation %% _ % playVersion % Omnidoc.name),
     libraryDependencies ++= externalModules map (_ % Omnidoc.name),
-    libraryDependencies +=  playOrganisation %% "play-docs" % playVersion,
-             initialize :=  { PomParser.registerParser }
+    libraryDependencies +=  playOrganisation %% "play-docs" % playVersion
   )
 
   def publishSettings: Seq[Setting[_]] = Seq(
@@ -91,14 +106,6 @@ object OmnidocBuild extends Build {
       </developers>
     },
     pomIncludeRepository := { _ => false }
-  )
-
-  // use a project-local ivy cache so that custom pom parsing is always applied on update
-  def localIvySettings: Seq[Setting[_]] = Seq(
-    ivyPaths := new IvyPaths(baseDirectory.value, Some(target.value / "ivy")),
-    resolvers += Resolver.file("ivy-local", appConfiguration.value.provider.scalaProvider.launcher.ivyHome / "local")(Resolver.ivyStylePatterns),
-    publishLocalConfiguration ~= { c => new PublishConfiguration(c.ivyFile, resolverName = "ivy-local", c.artifacts, c.checksums, c.logging, c.overwrite) },
-    resolvers += "scalaz-releases" at "http://dl.bintray.com/scalaz/releases" // specs2 depends on scalaz-stream
   )
 
   def updateSettings: Seq[Setting[_]] = Seq(
@@ -174,7 +181,7 @@ object OmnidocBuild extends Build {
       val dir = targetDir / name
       log.debug(s"Extracting $name")
       IO.unzip(file, dir, -"META-INF*")
-      val sourceUrl = module.extraAttributes.get(SourceUrlKey)
+      val sourceUrl = extractSourceUrl(file)
       if (sourceUrl.isEmpty) log.warn(s"Source url not found for ${module.name}")
       Extracted(dir, sourceUrl)
     }
@@ -203,7 +210,7 @@ object OmnidocBuild extends Build {
   }
 
   def javadocOptions = Def.task {
-    val label = "Play " + version.value
+    val label = "Play " + (if (isSnapshot.value) snapshotVersionLabel else version.value)
     Seq(
       "-windowtitle", label,
       "-notimestamp",
@@ -216,12 +223,18 @@ object OmnidocBuild extends Build {
 
   case class Extracted(dir: File, url: Option[String])
 
-  val SourceUrlKey = "info.sourceUrl"
+  val SourceUrlKey = "Omnidoc-Source-URL"
 
   val NoSourceUrl = "javascript:;"
 
   // first part of path is the extracted directory name, which is used as the source url mapping key
   val SourceUrlRegex = sourceUrlMarker("/([^/\\s]*)(/\\S*)").r
+
+  def extractSourceUrl(sourceJar: File): Option[String] = {
+    Using.jarFile(verify = false)(sourceJar) { jar =>
+      Option(jar.getManifest.getMainAttributes.getValue(SourceUrlKey))
+    }
+  }
 
   def sourceUrlMarker(path: String): String = s"http://%SOURCE;${path}%"
 
@@ -243,33 +256,6 @@ object OmnidocBuild extends Build {
       }
     }
     baseDir
-  }
-
-  object PomParser {
-
-    import org.apache.ivy.core.module.descriptor.ModuleDescriptor
-    import org.apache.ivy.plugins.parser.{ ModuleDescriptorParser, ModuleDescriptorParserRegistry }
-    import org.apache.ivy.plugins.parser.m2.PomModuleDescriptorBuilder
-
-    val extraKeys = Set(SourceUrlKey)
-
-    val extraParser = new CustomPomParser(CustomPomParser.default, addExtra)
-
-    def registerParser = ModuleDescriptorParserRegistry.getInstance.addParser(extraParser)
-
-    def addExtra(parser: ModuleDescriptorParser, descriptor: ModuleDescriptor): ModuleDescriptor = {
-      val properties = getExtraProperties(descriptor, extraKeys)
-      CustomPomParser.addExtra(properties, Map.empty, parser, descriptor)
-    }
-
-    def getExtraProperties(descriptor: ModuleDescriptor, keys: Set[String]): Map[String, String] = {
-      import scala.collection.JavaConverters._
-      PomModuleDescriptorBuilder.extractPomProperties(descriptor.getExtraInfo)
-        .asInstanceOf[java.util.Map[String, String]].asScala.toMap
-        .filterKeys(keys)
-        .map { case (k, v) => ("e:" + k, v) }
-    }
-
   }
 
 }
