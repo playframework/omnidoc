@@ -232,7 +232,14 @@ object OmnidocBuild extends Build {
 
   def extractSourceUrl(sourceJar: File): Option[String] = {
     Using.jarFile(verify = false)(sourceJar) { jar =>
-      Option(jar.getManifest.getMainAttributes.getValue(SourceUrlKey))
+      try {
+        Option(jar.getManifest.getMainAttributes.getValue(SourceUrlKey))
+      } catch {
+        case e: java.io.IOException =>
+          // JDK jar APIs refuse to attribute jar files in their exceptions
+          // And vegemite seems to have a corrupt jar
+          throw new java.io.IOException(s"Error reading manifest attributes from $sourceJar", e)
+      }
     }
   }
 
