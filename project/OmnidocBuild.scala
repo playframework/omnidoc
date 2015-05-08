@@ -63,6 +63,7 @@ object OmnidocBuild extends Build {
     projectSettings ++
     dependencySettings ++
     publishSettings ++
+    releaseSettings ++
     inConfig(Omnidoc) {
       updateSettings ++
       extractSettings ++
