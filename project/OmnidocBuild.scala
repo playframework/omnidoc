@@ -113,11 +113,11 @@ object OmnidocBuild extends Build {
     import ReleasePlugin.ReleaseKeys._
     import ReleaseStateTransformations._
 
-    Seq(
+    ReleasePlugin.releaseSettings ++ Seq(
       Sonatype.autoImport.sonatypeProfileName := "com.typesafe",
       crossBuild := true,
       tagName := (version in ThisBuild).value,
-      publishArtifactsAction := PgpKeys.publishSigned,
+      publishArtifactsAction <<= PgpKeys.publishSigned,
       releaseProcess := Seq(
         checkSnapshotDependencies,
         inquireVersions,
