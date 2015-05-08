@@ -102,7 +102,7 @@ fi
 if [ -n "$tag" ] ; then
   echo "Tagging documentation: $tag"
   git tag -am "Version $tag" $tag
-  git push --tags orgin
+  git push origin $tag
 fi
 
 popd
