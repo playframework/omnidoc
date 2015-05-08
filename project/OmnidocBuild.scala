@@ -1,6 +1,9 @@
+import com.typesafe.sbt.pgp.PgpKeys
 import sbt._
 import sbt.Artifact.SourceClassifier
 import sbt.Keys._
+import sbt.complete.Parser
+import xerial.sbt.Sonatype
 
 object OmnidocBuild extends Build {
 
@@ -8,10 +11,10 @@ object OmnidocBuild extends Build {
 
   val snapshotVersionLabel = "2.4.x"
 
-  val playVersion       = sys.props.getOrElse("play.version",       "2.4-SNAPSHOT")
-  val anormVersion      = sys.props.getOrElse("anorm.version",      "2.4.0-SNAPSHOT")
-  val playEbeanVersion  = sys.props.getOrElse("play-ebean.version", "1.0.0-SNAPSHOT")
-  val playSlickVersion  = sys.props.getOrElse("play-slick.version", "0.9.0-SNAPSHOT")
+  val playVersion       = sys.props.getOrElse("play.version",       "2.4.0-RC2")
+  val anormVersion      = sys.props.getOrElse("anorm.version",      "2.4.0-RC2")
+  val playEbeanVersion  = sys.props.getOrElse("play-ebean.version", "1.0.0-RC2")
+  val playSlickVersion  = sys.props.getOrElse("play-slick.version", "1.0.0-RC1")
   val maybeTwirlVersion = sys.props.get("twirl.version")
 
   // these dependencies pull in all the others
@@ -86,10 +89,6 @@ object OmnidocBuild extends Build {
   )
 
   def publishSettings: Seq[Setting[_]] = Seq(
-    publishTo := {
-      if (isSnapshot.value) Some(Opts.resolver.sonatypeSnapshots)
-      else Some(Opts.resolver.sonatypeStaging)
-    },
     homepage := Some(url("https://github.com/playframework/omnidoc")),
     licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
     pomExtra := {
@@ -107,6 +106,38 @@ object OmnidocBuild extends Build {
     },
     pomIncludeRepository := { _ => false }
   )
+
+  def releaseSettings: Seq[Setting[_]] = {
+    import sbtrelease._
+    import ReleasePlugin.ReleaseKeys._
+    import ReleaseStateTransformations._
+
+    Seq(
+      Sonatype.autoImport.sonatypeProfileName := "com.typesafe",
+      crossBuild := true,
+      tagName := (version in ThisBuild).value,
+      publishArtifactsAction := PgpKeys.publishSigned,
+      releaseProcess := Seq(
+        checkSnapshotDependencies,
+        inquireVersions,
+        runClean,
+        runTest,
+        setReleaseVersion,
+        commitReleaseVersion,
+        tagRelease,
+        publishArtifacts,
+        ReleaseStep(action = { state =>
+          Parser.parse("", Sonatype.SonatypeCommand.sonatypeRelease.parser(state)) match {
+            case Right(command) => command()
+            case Left(msg) => throw sys.error(s"Bad input for release command: $msg")
+          }
+        }),
+        setNextVersion,
+        commitNextVersion,
+        pushChanges
+      )
+    )
+  }
 
   def updateSettings: Seq[Setting[_]] = Seq(
     transitiveClassifiers := Seq(SourceClassifier, PlaydocClassifier),
