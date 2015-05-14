@@ -1,9 +1,10 @@
-import com.typesafe.sbt.pgp.PgpKeys
 import sbt._
 import sbt.Artifact.SourceClassifier
 import sbt.Keys._
-import sbt.complete.Parser
-import xerial.sbt.Sonatype
+
+import interplay.PlayBuildBase.autoImport._
+import interplay._
+import sbtrelease.ReleasePlugin.autoImport._
 
 object OmnidocBuild extends Build {
 
@@ -31,9 +32,10 @@ object OmnidocBuild extends Build {
   )
 
   val playModules = Seq(
-    playOrganisation %% "anorm"      % anormVersion,
-    playOrganisation %% "play-ebean" % playEbeanVersion,
-    playOrganisation %% "play-slick" % playSlickVersion
+    playOrganisation %% "anorm"                 % anormVersion,
+    playOrganisation %% "play-ebean"            % playEbeanVersion,
+    playOrganisation %% "play-slick"            % playSlickVersion
+    playOrganisation %% "play-slick-evolutions" % playSlickVersion
   )
 
   val maybeTwirlModule = (maybeTwirlVersion map { twirlVersion =>
@@ -57,12 +59,12 @@ object OmnidocBuild extends Build {
 
   lazy val omnidoc = project
     .in(file("."))
+    .enablePlugins(PlayLibrary, PlayReleaseBase)
     .settings(omnidocSettings: _*)
 
   def omnidocSettings: Seq[Setting[_]] =
     projectSettings ++
     dependencySettings ++
-    publishSettings ++
     releaseSettings ++
     inConfig(Omnidoc) {
       updateSettings ++
@@ -73,72 +75,33 @@ object OmnidocBuild extends Build {
     }
 
   def projectSettings: Seq[Setting[_]] = Seq(
-                  name :=  "play-omnidoc",
-          organization :=  playOrganisation,
-               version :=  playVersion,
-          scalaVersion :=  "2.11.4",
-    crossScalaVersions :=  Seq("2.10.4", scalaVersion.value)
+                               name := "play-omnidoc",
+                            version := playVersion,
+     playBuildRepoName in ThisBuild := "omnidoc"
   )
 
   def dependencySettings: Seq[Setting[_]] = Seq(
-              resolvers +=  Resolver.typesafeRepo("releases"),
-              resolvers ++= DefaultOptions.resolvers(snapshot = true),
       ivyConfigurations +=  Omnidoc,
     libraryDependencies ++= playProjects map (playOrganisation %% _ % playVersion % Omnidoc.name),
     libraryDependencies ++= externalModules map (_ % Omnidoc.name),
     libraryDependencies +=  playOrganisation %% "play-docs" % playVersion
   )
 
-  def publishSettings: Seq[Setting[_]] = Seq(
-    homepage := Some(url("https://github.com/playframework/omnidoc")),
-    licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
-    pomExtra := {
-      <scm>
-        <url>https://github.com/playframework/omnidoc</url>
-        <connection>scm:git:git@github.com:playframework/omnidoc.git</connection>
-      </scm>
-      <developers>
-        <developer>
-          <id>playframework</id>
-          <name>Play Framework Team</name>
-          <url>https://github.com/playframework</url>
-        </developer>
-      </developers>
-    },
-    pomIncludeRepository := { _ => false }
-  )
+  def releaseSettings: Seq[Setting[_]] = Seq(
+    releaseProcess := {
+      import ReleaseTransformations._
 
-  def releaseSettings: Seq[Setting[_]] = {
-    import sbtrelease._
-    import ReleasePlugin.ReleaseKeys._
-    import ReleaseStateTransformations._
-
-    ReleasePlugin.releaseSettings ++ Seq(
-      Sonatype.autoImport.sonatypeProfileName := "com.typesafe",
-      crossBuild := true,
-      tagName := (version in ThisBuild).value,
-      publishArtifactsAction <<= PgpKeys.publishSigned,
-      releaseProcess := Seq(
+      // Since the version comes externally, we don't set or update it here.
+      Seq[ReleaseStep](
         checkSnapshotDependencies,
-        inquireVersions,
-        runClean,
-        runTest,
-        setReleaseVersion,
-        commitReleaseVersion,
         tagRelease,
         publishArtifacts,
-        ReleaseStep(action = { state =>
-          Parser.parse("", Sonatype.SonatypeCommand.sonatypeRelease.parser(state)) match {
-            case Right(command) => command()
-            case Left(msg) => throw sys.error(s"Bad input for release command: $msg")
-          }
-        }),
-        setNextVersion,
-        commitNextVersion,
+        releaseStepCommand("sonatypeRelease"),
         pushChanges
       )
-    )
-  }
+    }
+
+  )
 
   def updateSettings: Seq[Setting[_]] = Seq(
     transitiveClassifiers := Seq(SourceClassifier, PlaydocClassifier),
