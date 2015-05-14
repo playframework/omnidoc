@@ -34,7 +34,7 @@ object OmnidocBuild extends Build {
   val playModules = Seq(
     playOrganisation %% "anorm"                 % anormVersion,
     playOrganisation %% "play-ebean"            % playEbeanVersion,
-    playOrganisation %% "play-slick"            % playSlickVersion
+    playOrganisation %% "play-slick"            % playSlickVersion,
     playOrganisation %% "play-slick-evolutions" % playSlickVersion
   )
 
