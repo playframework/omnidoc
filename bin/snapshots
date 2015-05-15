@@ -16,7 +16,7 @@ set -e
 
 # process arguments
 
-declare PLAY_BRANCH="master"
+declare PLAY_BRANCH="2.4.x"
 declare ANORM_BRANCH="master"
 declare PLAY_EBEAN_BRANCH="master"
 declare PLAY_SLICK_BRANCH="master"
