@@ -159,7 +159,8 @@ versions="$versions -Dplay-ebean.version=$PLAY_EBEAN_VERSION"
 versions="$versions -Dplay-slick.version=$PLAY_SLICK_VERSION"
 versions="$versions -Dtwirl.version=$TWIRL_VERSION"
 
-checkout $DEPLOY/omnidoc $PLAY_BRANCH
+cd $DEPLOY/omnidoc
+echo "Build omnidoc with versions: $versions"
 sbt $versions +publishLocal
 
 echo
