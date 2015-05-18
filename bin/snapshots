@@ -64,7 +64,7 @@ function extract_version {
 
 # versioned sbt build for play modules
 function build {
-  sbt -Dplay.version=$PLAY_VERSION "$@"
+  sbt -Dplay.version=$PLAY_VERSION -Dtwirl.version=$TWIRL_VERSION "$@"
 }
 
 if [ -n "$BRANCH" ] ; then
@@ -114,11 +114,18 @@ echo "     omnidoc: $PLAY_VERSION"
 export PLAY_VERSION
 
 echo
+echo --- twirl $TWIRL_VERSION
+echo
+
+cd $DEPLOY/twirl
+build +publishLocal plugin/publishLocal
+
+echo
 echo --- play $PLAY_VERSION
 echo
 
 cd $DEPLOY/playframework/framework
-./build +publishLocal
+./build -Dtwirl.version=$TWIRL_VERSION +publishLocal
 
 echo
 echo --- anorm $ANORM_VERSION
@@ -142,13 +149,6 @@ cd $DEPLOY/play-slick
 build +publishLocal
 
 echo
-echo --- twirl $TWIRL_VERSION
-echo
-
-cd $DEPLOY/twirl
-build +publishLocal plugin/publishLocal
-
-echo
 echo --- omnidoc $PLAY_VERSION
 echo
 
@@ -159,7 +159,8 @@ versions="$versions -Dplay-ebean.version=$PLAY_EBEAN_VERSION"
 versions="$versions -Dplay-slick.version=$PLAY_SLICK_VERSION"
 versions="$versions -Dtwirl.version=$TWIRL_VERSION"
 
-checkout $DEPLOY/omnidoc $PLAY_BRANCH
+cd $DEPLOY/omnidoc
+echo "Build omnidoc with versions: $versions"
 sbt $versions +publishLocal
 
 echo
