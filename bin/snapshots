@@ -125,7 +125,7 @@ echo --- play $PLAY_VERSION
 echo
 
 cd $DEPLOY/playframework/framework
-./build +publishLocal
+./build -Dtwirl.version=$TWIRL_VERSION +publishLocal
 
 echo
 echo --- anorm $ANORM_VERSION
