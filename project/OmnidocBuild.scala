@@ -94,6 +94,7 @@ object OmnidocBuild extends Build {
       // Since the version comes externally, we don't set or update it here.
       Seq[ReleaseStep](
         checkSnapshotDependencies,
+        inquireVersions,
         tagRelease,
         publishArtifacts,
         releaseStepCommand("sonatypeRelease"),
