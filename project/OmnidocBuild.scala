@@ -88,6 +88,7 @@ object OmnidocBuild extends Build {
   )
 
   def releaseSettings: Seq[Setting[_]] = Seq(
+    releaseTagName := playVersion,
     releaseProcess := {
       import ReleaseTransformations._
 
