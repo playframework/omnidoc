@@ -82,7 +82,7 @@ rm -rf confs
 cp -r $omnidoc/javadoc api/java
 cp -r $omnidoc/scaladoc api/scala
 cp -r $omnidoc/playdoc/manual manual
-cp -r $omnidoc/pladoc/confs confs
+cp -r $omnidoc/playdoc/confs confs
 
 # commit changes
 
