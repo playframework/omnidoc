@@ -88,13 +88,13 @@ object OmnidocBuild extends Build {
   )
 
   def releaseSettings: Seq[Setting[_]] = Seq(
+    releaseTagName := playVersion,
     releaseProcess := {
       import ReleaseTransformations._
 
       // Since the version comes externally, we don't set or update it here.
       Seq[ReleaseStep](
         checkSnapshotDependencies,
-        inquireVersions,
         tagRelease,
         publishArtifacts,
         releaseStepCommand("sonatypeRelease"),
