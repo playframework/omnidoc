@@ -52,11 +52,6 @@ function checkout {
   git clean -fxd
 }
 
-# detect play base version
-function extract_play_version {
-  echo $(cat version.sbt | sed 's/Release.branchVersion in ThisBuild := "\(.*\)"/\1/')
-}
-
 # detect base version from version.sbt
 function extract_version {
   echo $(cat version.sbt | sed 's/version in ThisBuild := "\(.*\)"/\1/')
@@ -85,7 +80,7 @@ echo "Checking out branches and extracting versions..."
 pushd $DEPLOY
 
 checkout $DEPLOY/playframework/framework $PLAY_BRANCH
-PLAY_VERSION=$(extract_play_version)
+PLAY_VERSION=$(extract_version)
 
 checkout $DEPLOY/anorm $ANORM_BRANCH
 ANORM_VERSION=$(extract_version)
