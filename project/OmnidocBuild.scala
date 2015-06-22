@@ -84,7 +84,15 @@ object OmnidocBuild extends Build {
       ivyConfigurations +=  Omnidoc,
     libraryDependencies ++= playProjects map (playOrganisation %% _ % playVersion % Omnidoc.name),
     libraryDependencies ++= externalModules map (_ % Omnidoc.name),
-    libraryDependencies +=  playOrganisation %% "play-docs" % playVersion
+    libraryDependencies +=  playOrganisation %% "play-docs" % playVersion,
+    libraryDependencies ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, 10)) => Seq(
+          compilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full)
+        )
+        case _ => Nil
+      }
+    }
   )
 
   def releaseSettings: Seq[Setting[_]] = Seq(
