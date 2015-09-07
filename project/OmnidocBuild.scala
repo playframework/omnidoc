@@ -12,10 +12,10 @@ object OmnidocBuild extends Build {
 
   val snapshotVersionLabel = "2.4.x"
 
-  val playVersion       = sys.props.getOrElse("play.version",       "2.4.2")
+  val playVersion       = sys.props.getOrElse("play.version",       "2.4.3")
   val anormVersion      = sys.props.getOrElse("anorm.version",      "2.4.0")
   val playEbeanVersion  = sys.props.getOrElse("play-ebean.version", "1.0.0")
-  val playSlickVersion  = sys.props.getOrElse("play-slick.version", "1.0.0")
+  val playSlickVersion  = sys.props.getOrElse("play-slick.version", "1.0.1")
   val maybeTwirlVersion = sys.props.get("twirl.version")
 
   // these dependencies pull in all the others
