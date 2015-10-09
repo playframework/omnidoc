@@ -72,7 +72,8 @@ object OmnidocBuild extends Build {
       scaladocSettings ++
       javadocSettings ++
       packageSettings
-    }
+    } ++
+    GeneratePdf.settings
 
   def projectSettings: Seq[Setting[_]] = Seq(
                                name := "play-omnidoc",

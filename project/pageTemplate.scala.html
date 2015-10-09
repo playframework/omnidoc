@@ -1,0 +1,34 @@
+@(playVersion: String, content: Html)
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<script type="text/javascript" charset="utf-8" src="webjars/@playVersion/jquery/jquery.js"></script>
+    <script type="text/javascript" charset="utf-8" src="style/main.js"></script>
+		<link href="style/main.css" rel="stylesheet"/>
+		<link href="webjars/@playVersion/prettify/prettify.css" rel="stylesheet"/>
+		<script type="text/javascript" charset="utf-8" src="webjars/@playVersion/prettify/prettify.js"></script>
+		<script type="text/javascript" charset="utf-8" src="webjars/@playVersion/prettify/lang-scala.js"></script>
+		<style type="text/css">
+			/* This removes the space left for the navbar */
+			#content article {
+				width: 960px;
+			}
+			/* The links in the main.css are specific to the inbuilt documentation server, overwrite it here */
+			#content.doc a[href^="http"]:after {
+				content:url(style/external.png);
+			}
+		</style>
+	</head>
+	<body>
+		<div id="content" class="wrapper doc">
+			<article id="main">
+			@content
+			</article>
+		</div>
+		<script type="text/javascript">
+			prettyPrint();
+			// Work around for https://github.com/wkhtmltopdf/wkhtmltopdf/issues/2404
+			$("a > img").parent().css("display", "block");
+    </script>
+	</body>
+</html>
