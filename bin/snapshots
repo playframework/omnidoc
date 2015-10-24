@@ -19,7 +19,7 @@ set -e
 declare PLAY_BRANCH="2.4.x"
 declare ANORM_BRANCH="2.4.x"
 declare PLAY_EBEAN_BRANCH="play-2.4.x"
-declare PLAY_SLICK_BRANCH="master"
+declare PLAY_SLICK_BRANCH="1.1.x"
 declare TWIRL_BRANCH="master"
 
 unset DEPLOY
