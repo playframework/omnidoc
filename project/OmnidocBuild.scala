@@ -22,7 +22,8 @@ object OmnidocBuild extends Build {
   val playProjects = Seq(
     "play-cache",
     "play-integration-test",
-    "play-java-jpa"
+    "play-java-jpa",
+    "play-jdbc-evolutions"
   )
 
   val excludeArtifacts = Seq(
