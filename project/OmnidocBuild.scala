@@ -9,14 +9,17 @@ import sbtrelease.ReleasePlugin.autoImport._
 object OmnidocBuild extends Build {
 
   val playOrganisation = "com.typesafe.play"
+  val scalaTestPlusPlayOrganisation = "org.scalatestplus.play"
+  val playOrganisations = Seq(playOrganisation, scalaTestPlusPlayOrganisation)
 
   val snapshotVersionLabel = "2.5.x"
 
-  val playVersion       = sys.props.getOrElse("play.version",       "2.5.0-M2")
-  val anormVersion      = sys.props.getOrElse("anorm.version",      "3.0.0-M1")
-  val playEbeanVersion  = sys.props.getOrElse("play-ebean.version", "3.0.0-M1")
-  val playSlickVersion  = sys.props.getOrElse("play-slick.version", "2.0.0-M1")
-  val maybeTwirlVersion = sys.props.get("twirl.version")
+  val playVersion              = sys.props.getOrElse("play.version",               "2.5.0-M2")
+  val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "1.5.0-SNAP1")
+  val anormVersion             = sys.props.getOrElse("anorm.version",              "3.0.0-M1")
+  val playEbeanVersion         = sys.props.getOrElse("play-ebean.version",         "3.0.0-M1")
+  val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "2.0.0-M1")
+  val maybeTwirlVersion        = sys.props.get("twirl.version")
 
   // these dependencies pull in all the others
   val playProjects = Seq(
@@ -34,6 +37,7 @@ object OmnidocBuild extends Build {
 
   val playModules = Seq(
     playOrganisation %% "anorm"                 % anormVersion,
+    scalaTestPlusPlayOrganisation %% "scalatestplus-play" % scalaTestPlusPlayVersion,
     playOrganisation %% "play-ebean"            % playEbeanVersion,
     playOrganisation %% "play-slick"            % playSlickVersion,
     playOrganisation %% "play-slick-evolutions" % playSlickVersion
@@ -46,7 +50,8 @@ object OmnidocBuild extends Build {
   val externalModules = playModules ++ maybeTwirlModule
 
   val nameFilter = excludeArtifacts.foldLeft(AllPassFilter: NameFilter)(_ - _)
-  val playModuleFilter = moduleFilter(organization = playOrganisation, name = nameFilter)
+  val organizationFilter = playOrganisations.map(new ExactFilter(_): NameFilter).reduce(_ | _)
+  val playModuleFilter = moduleFilter(organization = organizationFilter, name = nameFilter)
 
   val Omnidoc = config("omnidoc").hide
 
