@@ -5,6 +5,7 @@
 # Expects to be run against a directory with checked out repositories for:
 #
 #   - playframework
+#   - scalatestplus-play
 #   - anorm
 #   - play-ebean
 #   - play-slick
@@ -17,6 +18,7 @@ set -e
 # process arguments
 
 declare PLAY_BRANCH="master"
+declare SCALATESTPLUS_PLAY_BRANCH="master"
 declare ANORM_BRANCH="master"
 declare PLAY_EBEAN_BRANCH="master"
 declare PLAY_SLICK_BRANCH="master"
@@ -82,6 +84,9 @@ pushd $DEPLOY
 checkout $DEPLOY/playframework/framework $PLAY_BRANCH
 PLAY_VERSION=$(extract_version)
 
+checkout $DEPLOY/scalatestplus-play $SCALATESTPLUS_PLAY_BRANCH
+SCALATESTPLUS_PLAY_VERSION=$(extract_version)
+
 checkout $DEPLOY/anorm $ANORM_BRANCH
 ANORM_VERSION=$(extract_version)
 
@@ -99,12 +104,13 @@ TWIRL_VERSION=$(extract_version)
 echo
 echo --- Building snapshots
 echo
-echo "        play: $PLAY_VERSION"
-echo "       anorm: $ANORM_VERSION"
-echo "  play-ebean: $PLAY_EBEAN_VERSION"
-echo "  play-slick: $PLAY_SLICK_VERSION"
-echo "       twirl: $TWIRL_VERSION"
-echo "     omnidoc: $PLAY_VERSION"
+echo "               play: $PLAY_VERSION"
+echo " scalatestplus-play: $SCALATESTPLUS_PLAY_VERSION"
+echo "              anorm: $ANORM_VERSION"
+echo "         play-ebean: $PLAY_EBEAN_VERSION"
+echo "         play-slick: $PLAY_SLICK_VERSION"
+echo "              twirl: $TWIRL_VERSION"
+echo "            omnidoc: $PLAY_VERSION"
 
 export PLAY_VERSION
 
@@ -121,6 +127,13 @@ echo
 
 cd $DEPLOY/playframework/framework
 ./build -Dtwirl.version=$TWIRL_VERSION +publishLocal
+
+echo
+echo --- scalatestplus-play $SCALATESTPLUS_PLAY_VERSION
+echo
+
+cd $DEPLOY/scalatestplus-play
+build +publishLocal
 
 echo
 echo --- anorm $ANORM_VERSION
@@ -149,6 +162,7 @@ echo
 
 versions=""
 versions="$versions -Dplay.version=$PLAY_VERSION"
+versions="$versions -Dscalatestplus-play.version=$SCALATESTPLUS_PLAY_VERSION"
 versions="$versions -Danorm.version=$ANORM_VERSION"
 versions="$versions -Dplay-ebean.version=$PLAY_EBEAN_VERSION"
 versions="$versions -Dplay-slick.version=$PLAY_SLICK_VERSION"
