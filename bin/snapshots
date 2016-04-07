@@ -140,7 +140,9 @@ echo --- anorm $ANORM_VERSION
 echo
 
 cd $DEPLOY/anorm
-build +publishLocal
+# Don't use the build function here as it overrides the play version, and since anorm depends on
+# play-iteratees which is no longer part of the main Play code base, the version won't be there.
+sbt +publishLocal
 
 echo
 echo --- play-ebean $PLAY_EBEAN_VERSION
