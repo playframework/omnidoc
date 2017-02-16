@@ -12,13 +12,13 @@ object OmnidocBuild extends Build {
   val scalaTestPlusPlayOrganisation = "org.scalatestplus.play"
   val playOrganisations = Seq(playOrganisation, scalaTestPlusPlayOrganisation)
 
-  val snapshotVersionLabel = "2.5.x"
+  val snapshotVersionLabel = "2.6.x"
 
-  val playVersion              = sys.props.getOrElse("play.version",               "2.5.3")
-  val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "1.5.1")
-  val anormVersion             = sys.props.getOrElse("anorm.version",              "2.5.1")
-  val playEbeanVersion         = sys.props.getOrElse("play-ebean.version",         "3.0.1")
-  val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "2.0.2")
+  val playVersion              = sys.props.getOrElse("play.version",               "2.6.0-M1")
+  val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "2.0.0-M2")
+  val anormVersion             = sys.props.getOrElse("anorm.version",              "2.6.0-M1")
+  val playEbeanVersion         = sys.props.getOrElse("play-ebean.version",         "4.0.0-M1")
+  val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "3.0.0-M1")
   val maybeTwirlVersion        = sys.props.get("twirl.version")
 
   // these dependencies pull in all the others
@@ -225,7 +225,8 @@ object OmnidocBuild extends Build {
       "-windowtitle", label,
       "-notimestamp",
       "-subpackages", "play",
-      "-exclude", "play.api:play.core"
+      "-exclude", "play.api:play.core",
+      "-Xdoclint:none"
     )
   }
 
