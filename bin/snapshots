@@ -8,6 +8,7 @@
 #   - scalatestplus-play
 #   - anorm
 #   - play-ebean
+#   - play-json
 #   - play-slick
 #   - twirl
 #   - omnidoc
@@ -21,6 +22,7 @@ declare PLAY_BRANCH="master"
 declare SCALATESTPLUS_PLAY_BRANCH="master"
 declare ANORM_BRANCH="master"
 declare PLAY_EBEAN_BRANCH="master"
+declare PLAY_JSON_BRANCH="master"
 declare PLAY_SLICK_BRANCH="master"
 declare TWIRL_BRANCH="master"
 
@@ -93,6 +95,9 @@ ANORM_VERSION=$(extract_version)
 checkout $DEPLOY/play-ebean $PLAY_EBEAN_BRANCH
 PLAY_EBEAN_VERSION=$(extract_version)
 
+checkout $DEPLOY/play-json $PLAY_JSON_BRANCH
+PLAY_JSON_VERSION=$(extract_version)
+
 checkout $DEPLOY/play-slick $PLAY_SLICK_BRANCH
 PLAY_SLICK_VERSION=$(extract_version)
 
@@ -108,6 +113,7 @@ echo "               play: $PLAY_VERSION"
 echo " scalatestplus-play: $SCALATESTPLUS_PLAY_VERSION"
 echo "              anorm: $ANORM_VERSION"
 echo "         play-ebean: $PLAY_EBEAN_VERSION"
+echo "          play-json: $PLAY_JSON_VERSION"
 echo "         play-slick: $PLAY_SLICK_VERSION"
 echo "              twirl: $TWIRL_VERSION"
 echo "            omnidoc: $PLAY_VERSION"
@@ -126,7 +132,7 @@ echo --- play $PLAY_VERSION
 echo
 
 cd $DEPLOY/playframework/framework
-./build -Dtwirl.version=$TWIRL_VERSION +publishLocal
+build -Dtwirl.version=$TWIRL_VERSION +publishLocal
 
 echo
 echo --- scalatestplus-play $SCALATESTPLUS_PLAY_VERSION
@@ -150,6 +156,13 @@ cd $DEPLOY/play-ebean
 build +publishLocal plugin/publishLocal
 
 echo
+echo --- play-json $PLAY_JSON_VERSION
+echo
+
+cd $DEPLOY/play-json
+build +publishLocal
+
+echo
 echo --- play-slick $PLAY_SLICK_VERSION
 echo
 
@@ -165,6 +178,7 @@ versions="$versions -Dplay.version=$PLAY_VERSION"
 versions="$versions -Dscalatestplus-play.version=$SCALATESTPLUS_PLAY_VERSION"
 versions="$versions -Danorm.version=$ANORM_VERSION"
 versions="$versions -Dplay-ebean.version=$PLAY_EBEAN_VERSION"
+versions="$versions -Dplay-json.version=$PLAY_JSON_VERSION"
 versions="$versions -Dplay-slick.version=$PLAY_SLICK_VERSION"
 versions="$versions -Dtwirl.version=$TWIRL_VERSION"
 
