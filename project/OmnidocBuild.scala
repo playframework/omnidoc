@@ -18,6 +18,7 @@ object OmnidocBuild extends Build {
   val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "2.0.0-M2")
   val anormVersion             = sys.props.getOrElse("anorm.version",              "2.6.0-M1")
   val playEbeanVersion         = sys.props.getOrElse("play-ebean.version",         "4.0.0-M1")
+  val playJsonVersion          = sys.props.getOrElse("play-json.version",          "2.6.0-M4")
   val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "3.0.0-M2")
   val maybeTwirlVersion        = sys.props.get("twirl.version")
 
@@ -39,6 +40,8 @@ object OmnidocBuild extends Build {
     playOrganisation %% "anorm"                 % anormVersion,
     scalaTestPlusPlayOrganisation %% "scalatestplus-play" % scalaTestPlusPlayVersion,
     playOrganisation %% "play-ebean"            % playEbeanVersion,
+    playOrganisation %% "play-functional"       % playJsonVersion,
+    playOrganisation %% "play-json"             % playJsonVersion,
     playOrganisation %% "play-slick"            % playSlickVersion,
     playOrganisation %% "play-slick-evolutions" % playSlickVersion
   )
@@ -135,7 +138,13 @@ object OmnidocBuild extends Build {
   )
 
   def scaladocSettings: Seq[Setting[_]] = Defaults.docTaskSettings(scaladoc) ++ Seq(
-          sources in scaladoc := (sources.value ** "*.scala").get,
+          sources in scaladoc := {
+            val s = sources.value
+            // Exclude a Play JSON file from the Scaladoc build because
+            // it includes a macro from a third party library and we don't
+            // want to deal with bringing extra libraries into Omnidoc.
+            ((s ** "*.scala") --- (s ** "JsMacroImpl.scala")).get
+          },
            target in scaladoc := target.value / "scaladoc",
     scalacOptions in scaladoc := scaladocOptions.value,
                      scaladoc := rewriteSourceUrls(scaladoc.value, sourceUrls.value, "/src/main/scala", ".scala")
