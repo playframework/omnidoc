@@ -52,7 +52,7 @@ object OmnidocBuild extends Build {
 
   val externalModules = playModules ++ maybeTwirlModule
 
-  val nameFilter = excludeArtifacts.foldLeft(AllPassFilter: NameFilter)(_ - _)
+  val nameFilter = excludeArtifacts.foldLeft(new SimpleFilter(!_.contains("-standalone")): NameFilter)(_ - _)
   val organizationFilter = playOrganisations.map(new ExactFilter(_): NameFilter).reduce(_ | _)
   val playModuleFilter = moduleFilter(organization = organizationFilter, name = nameFilter)
 
