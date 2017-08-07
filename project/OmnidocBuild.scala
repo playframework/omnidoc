@@ -14,11 +14,12 @@ object OmnidocBuild extends Build {
 
   val snapshotVersionLabel = "2.6.x"
 
-  val playVersion              = sys.props.getOrElse("play.version",               "2.6.0")
-  val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "3.0.0")
+  val playVersion              = sys.props.getOrElse("play.version",               "2.6.2")
+  val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "3.1.1")
   val anormVersion             = sys.props.getOrElse("anorm.version",              "2.5.3")
   val playEbeanVersion         = sys.props.getOrElse("play-ebean.version",         "4.0.2")
-  val playJsonVersion          = sys.props.getOrElse("play-json.version",          "2.6.0")
+  val playJsonVersion          = sys.props.getOrElse("play-json.version",          "2.6.2")
+  val playWsVersion            = sys.props.getOrElse("play-ws.version",            "1.0.4")
   val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "3.0.0")
   val maybeTwirlVersion        = sys.props.get("twirl.version")
 
@@ -37,13 +38,18 @@ object OmnidocBuild extends Build {
   )
 
   val playModules = Seq(
-    playOrganisation %% "anorm"                 % anormVersion,
+    playOrganisation %% "anorm"                   % anormVersion,
     scalaTestPlusPlayOrganisation %% "scalatestplus-play" % scalaTestPlusPlayVersion,
-    playOrganisation %% "play-ebean"            % playEbeanVersion,
-    playOrganisation %% "play-functional"       % playJsonVersion,
-    playOrganisation %% "play-json"             % playJsonVersion,
-    playOrganisation %% "play-slick"            % playSlickVersion,
-    playOrganisation %% "play-slick-evolutions" % playSlickVersion
+    playOrganisation %% "play-ebean"              % playEbeanVersion,
+    playOrganisation %% "play-functional"         % playJsonVersion,
+    playOrganisation %% "play-json"               % playJsonVersion,
+    playOrganisation %% "play-json-joda"          % playJsonVersion,
+    playOrganisation %% "play-ws-standalone"      % playWsVersion,
+    playOrganisation %% "play-ws-standalone-xml"  % playWsVersion,
+    playOrganisation %% "play-ws-standalone-json" % playWsVersion,
+    playOrganisation %% "play-ahc-ws-standalone"  % playWsVersion,
+    playOrganisation %% "play-slick"              % playSlickVersion,
+    playOrganisation %% "play-slick-evolutions"   % playSlickVersion
   )
 
   val maybeTwirlModule = (maybeTwirlVersion map { twirlVersion =>
