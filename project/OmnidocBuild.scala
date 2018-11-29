@@ -22,12 +22,39 @@ object OmnidocBuild extends Build {
   val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "4.0.0-RC2")
   val maybeTwirlVersion        = sys.props.get("twirl.version")
 
-  // these dependencies pull in all the others
+  // List Play artifacts so that they can be added as dependencies
+  // and later Omnidoc will read the javadoc artifact.
+  //
+  // Of course there are dependencies between these projects and
+  // we would need to list them all here, but it is better if we
+  // do so that we won't need to worry about the dependency tree.
   val playProjects = Seq(
-    "play-cache",
-    "play-integration-test",
+    "play-streams",
+    "play-joda-forms",
+    "play",
+    "play-server",
+    "play-netty-server",
+    "play-akka-http-server",
+    "play-akka-http2-support",
+    "play-jdbc-api",
+    "play-jdbc",
+    "play-jdbc-evolutions",
+    "play-java-jdbc",
     "play-java-jpa",
-    "play-jdbc-evolutions"
+    "play-test",
+    "play-specs2",
+    "play-java",
+    "play-java-forms",
+    "play-guice",
+    "play-logback",
+    "play-ws",
+    "play-ahc-ws",
+    "play-openid",
+    "play-filters-helpers",
+    "play-cache",
+    "play-ehcache",
+    "play-caffeine-cache",
+    "play-jcache"
   )
 
   val excludeArtifacts = Seq(
