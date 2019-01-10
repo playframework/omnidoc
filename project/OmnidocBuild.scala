@@ -50,7 +50,7 @@ object OmnidocBuild extends Build {
     "play-ws",
     "play-ahc-ws",
     "play-openid",
-    "play-filters-helpers",
+    "filters-helpers",
     "play-cache",
     "play-ehcache",
     "play-caffeine-cache",
