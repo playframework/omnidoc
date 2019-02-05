@@ -54,7 +54,6 @@ object OmnidocBuild extends Build {
     "filters-helpers",
     "play-cache",
     "play-ehcache",
-    "play-caffeine-cache",
     "play-jcache"
   )
 
