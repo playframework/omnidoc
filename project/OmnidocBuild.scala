@@ -1,4 +1,6 @@
 import sbt._
+import io.Using
+import sbt.librarymanagement.ivy._
 import sbt.Artifact.SourceClassifier
 import sbt.Keys._
 
@@ -183,7 +185,7 @@ object OmnidocBuild extends Build {
 
   def packageSettings: Seq[Setting[_]] = Seq(
     mappings in (Compile, packageBin) ++= {
-      def mapped(dir: File, path: String) = dir.*** pair rebase(dir, path)
+      def mapped(dir: File, path: String) = dir.allPaths pair Path.rebase(dir, path)
       mapped(playdoc.value,  "play/docs/content") ++
       mapped(scaladoc.value, "play/docs/content/api/scala") ++
       mapped(javadoc.value,  "play/docs/content/api/java")
@@ -295,7 +297,7 @@ object OmnidocBuild extends Build {
   }
 
   def rewriteSourceUrls(baseDir: File, sourceUrls: Map[String, String], prefix: String, suffix: String): File = {
-    val files = baseDir.***.filter(!_.isDirectory).get
+    val files = baseDir.allPaths.filter(!_.isDirectory).get
     files foreach { file =>
       val contents = IO.read(file)
       val newContents = SourceUrlRegex.replaceAllIn(contents, matched => {
