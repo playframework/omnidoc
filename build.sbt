@@ -1,0 +1,1 @@
+val omnidoc = OmnidocBuild.omnidoc
