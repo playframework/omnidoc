@@ -1,10 +1,9 @@
-import sbt._
+import sbt.{ Def, _ }
 import io.Using
-import sbt.librarymanagement.{ DependencyResolution, GetClassifiersConfiguration, GetClassifiersModule }
+import sbt.librarymanagement.{ DependencyResolution, GetClassifiersConfiguration, GetClassifiersModule, UpdateConfiguration }
 import sbt.librarymanagement.ivy._
 import sbt.Artifact.SourceClassifier
 import sbt.Keys._
-
 import interplay.PlayBuildBase.autoImport._
 import interplay._
 import sbtrelease.ReleasePlugin.autoImport._
@@ -92,7 +91,10 @@ object OmnidocBuild {
   val sourceUrls       = TaskKey[Map[String, String]]("sourceUrls")
   val javadoc          = TaskKey[File]("javadoc")
   val scaladoc         = TaskKey[File]("scaladoc")
-  val playdoc          = TaskKey[File]("playdoc")
+  val extractedPlaydoc         = TaskKey[File]("playdoc")
+  //Duplicate of sbt'd updateClassifiers for 'playdoc' specific use")
+  val updatePlaydocClassifiers = TaskKey[(sbt.librarymanagement.UpdateReport, sbt.librarymanagement.UpdateReport)] ("updatePlaydocClassifiers")
+
 
   lazy val omnidoc = project
     .in(file("."))
@@ -152,7 +154,7 @@ object OmnidocBuild {
 
   def updateSettings: Seq[Setting[_]] = Seq(
     transitiveClassifiers := Seq(SourceClassifier, PlaydocClassifier),
-        updateClassifiers := updateClassifiersTask.value
+    updatePlaydocClassifiers := updatePlaydocClassifiersTask.value
   )
 
   def extractSettings: Seq[Setting[_]] = Seq(
@@ -162,8 +164,8 @@ object OmnidocBuild {
                 sources := extractedSources.value.map(_.dir),
              sourceUrls := getSourceUrls(extractedSources.value),
     dependencyClasspath := Classpaths.managedJars(configuration.value, classpathTypes.value, update.value),
-      target in playdoc := target.value / "playdoc",
-                playdoc := extractPlaydocs.value
+      target in extractedPlaydoc := target.value / "playdoc",
+                extractedPlaydoc := extractPlaydocs.value
   )
 
   def scaladocSettings: Seq[Setting[_]] = Defaults.docTaskSettings(scaladoc) ++ Seq(
@@ -205,53 +207,49 @@ object OmnidocBuild {
   def packageSettings: Seq[Setting[_]] = Seq(
     mappings in (Compile, packageBin) ++= {
       def mapped(dir: File, path: String) = dir.allPaths pair Path.rebase(dir, path)
-      mapped(playdoc.value,  "play/docs/content") ++
+      mapped(extractedPlaydoc.value,  "play/docs/content") ++
       mapped(scaladoc.value, "play/docs/content/api/scala") ++
       mapped(javadoc.value,  "play/docs/content/api/java")
     }
   )
 
   /**
-   * Custom update classifiers task that only resolves classifiers for Play modules.
-   * Also redirects warnings to debug for any artifacts that can't be found.
-   */
-  def updateClassifiersTask = Def.task {
-    val s = streams.value
-    val is = ivySbt.value
-    val lm = IvyDependencyResolution(is.configuration)
-    val classifiersModule = {
-      implicit val key = (m: ModuleID) => (m.organization, m.name, m.revision)
-      val playModules = update.value.configuration(Omnidoc).toVector.flatMap(_.allModules.filter(playModuleFilter))
-      GetClassifiersModule(
-        projectID.value,
-        None,
-        playModules,
-        Vector(Omnidoc),
-        transitiveClassifiers.value.toVector
-      )
-    }
-    val updateConfig0 = updateConfiguration.value
-    val updateConfig = updateConfig0
-        .withMetadataDirectory(dependencyCacheDirectory.value)
-        .withArtifactFilter(updateConfig0.artifactFilter.map(af => af.withInverted(!af.inverted)))
-    val srcTypes = sourceArtifactTypes.value
-    val docTypes = docArtifactTypes.value
-    val uwConfig = (unresolvedWarningConfiguration in update).value
-    lm.updateClassifiers(
-      GetClassifiersConfiguration(
-        classifiersModule,
+    * Custom update classifiers task that only resolves classifiers for Play modules.
+    * Also redirects warnings to debug for any artifacts that can't be found.
+    */
+  private def updatePlaydocClassifiersTask: Def.Initialize[Task[(UpdateReport, UpdateReport)]] = Def.task {
+    val filteredConfig: UpdateConfiguration = updateConfiguration.value
+      .withMetadataDirectory(dependencyCacheDirectory.value)
+      .withArtifactFilter(updateConfiguration.value.artifactFilter.map(af => af.withInverted(!af.inverted)))
+    val unfilteredConfig: UpdateConfiguration = updateConfiguration.value
+      .withMetadataDirectory(dependencyCacheDirectory.value)
+
+    def updateClassifiersTask0(updateConfig: UpdateConfiguration): UpdateReport = {
+      val s = streams.value
+      val is = ivySbt.value
+      val lm = IvyDependencyResolution(is.configuration)
+      val classifiersModule = {
+        val playModules = update.value.configuration(Omnidoc).toVector.flatMap(_.allModules.filter(playModuleFilter))
+        GetClassifiersModule(projectID.value, None, playModules, Vector(Omnidoc), transitiveClassifiers.value.toVector)
+      }
+      val srcTypes = sourceArtifactTypes.value
+      val docTypes = docArtifactTypes.value
+      val uwConfig = (unresolvedWarningConfiguration in update).value
+      lm.updateClassifiers(
+        GetClassifiersConfiguration(classifiersModule, Vector.empty, updateConfig, srcTypes.toVector, docTypes.toVector),
+        uwConfig,
         Vector.empty,
-        updateConfig,
-        srcTypes.toVector,
-        docTypes.toVector
-      ),
-      uwConfig,
-      Vector.empty,
-      s.log
-    ) match {
-      case Left(_)   => ???
-      case Right(ur) => ur
+        s.log
+      ) match {
+        case Left(_) => ???
+        case Right(ur) => ur
+      }
     }
+
+    // Current Impl of Ivy Resolvers in sbt or the underlying Ivy client don't support
+    // the combination of `playdoc` classifiers with `sources` and `docs` so we
+    // run two passes with differentcomplementary) filter.
+    (updateClassifiersTask0(filteredConfig), updateClassifiersTask0(unfilteredConfig))
   } tag(Tags.Update, Tags.Network)
 
   /**
@@ -269,7 +267,7 @@ object OmnidocBuild {
   def extractSources = Def.task {
     val log          = streams.value.log
     val targetDir    = (target in sources).value
-    val dependencies = (updateClassifiers.value filter artifactFilter(classifier = SourceClassifier)).toSeq
+    val dependencies = (updatePlaydocClassifiers.value._1 filter artifactFilter(classifier = SourceClassifier)).toSeq
     log.info("Extracting sources...")
     IO.delete(targetDir)
     dependencies map { case (conf, module, artifact, file) =>
@@ -285,8 +283,8 @@ object OmnidocBuild {
 
   def extractPlaydocs = Def.task {
     val log          = streams.value.log
-    val targetDir    = (target in playdoc).value
-    val dependencies = updateClassifiers.value matching artifactFilter(classifier = PlaydocClassifier)
+    val targetDir    = (target in extractedPlaydoc).value
+    val dependencies = updatePlaydocClassifiers.value._2 matching artifactFilter(classifier = PlaydocClassifier)
     log.info("Extracting playdocs...")
     IO.delete(targetDir)
     dependencies foreach { case file =>
