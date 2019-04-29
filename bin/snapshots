@@ -83,7 +83,7 @@ echo "Checking out branches and extracting versions..."
 
 pushd $DEPLOY
 
-checkout $DEPLOY/playframework/framework $PLAY_BRANCH
+checkout $DEPLOY/playframework $PLAY_BRANCH
 PLAY_VERSION=$(extract_version)
 
 checkout $DEPLOY/scalatestplus-play $SCALATESTPLUS_PLAY_BRANCH
@@ -131,7 +131,7 @@ echo
 echo --- play $PLAY_VERSION
 echo
 
-cd $DEPLOY/playframework/framework
+cd $DEPLOY/playframework
 build -Dtwirl.version=$TWIRL_VERSION +publishLocal
 
 echo
