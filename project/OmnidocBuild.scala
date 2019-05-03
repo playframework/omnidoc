@@ -14,7 +14,7 @@ object OmnidocBuild {
   val scalaTestPlusPlayOrganisation = "org.scalatestplus.play"
   val playOrganisations = Seq(playOrganisation, scalaTestPlusPlayOrganisation)
 
-  val snapshotVersionLabel = "2.6.x"
+  val snapshotVersionLabel = "2.7.x"
 
   val playVersion              = sys.props.getOrElse("play.version",               "2.7.2")
   val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "4.0.2")
@@ -118,7 +118,7 @@ object OmnidocBuild {
                                name := "play-omnidoc",
                             version := playVersion,
      playBuildRepoName in ThisBuild := "omnidoc",
-                 crossScalaVersions := Seq(ScalaVersions.scala212, ScalaVersions.scala211)
+                 crossScalaVersions := Seq(ScalaVersions.scala212)
   )
 
   def dependencySettings: Seq[Setting[_]] = Seq(
