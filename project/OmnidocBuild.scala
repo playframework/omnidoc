@@ -19,7 +19,7 @@ object OmnidocBuild {
   val playVersion              = sys.props.getOrElse("play.version",               "2.8.0-M1")
   val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "5.0.0-M1")
   val playJsonVersion          = sys.props.getOrElse("play-json.version",          "2.8.0-M1")
-  val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "5.0.0-M1")
+  val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "5.0.0-M2")
   val maybeTwirlVersion        = sys.props.get("twirl.version")
 
   // List Play artifacts so that they can be added as dependencies
@@ -116,7 +116,8 @@ object OmnidocBuild {
                                name := "play-omnidoc",
                             version := playVersion,
      playBuildRepoName in ThisBuild := "omnidoc",
-                 crossScalaVersions := Seq(ScalaVersions.scala212)
+                 crossScalaVersions := Seq(ScalaVersions.scala212, ScalaVersions.scala213),
+                          resolvers += Resolver.bintrayRepo("akka", "snapshots")
   )
 
   def dependencySettings: Seq[Setting[_]] = Seq(
@@ -127,7 +128,7 @@ object OmnidocBuild {
     libraryDependencies ++= {
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, 10)) => Seq(
-          compilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full)
+          compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
         )
         case _ => Nil
       }
