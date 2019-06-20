@@ -118,7 +118,8 @@ object OmnidocBuild {
                                name := "play-omnidoc",
                             version := playVersion,
      playBuildRepoName in ThisBuild := "omnidoc",
-                 crossScalaVersions := Seq(ScalaVersions.scala212, ScalaVersions.scala211)
+                       scalaVersion := "2.13.0",
+                 crossScalaVersions := Seq("2.13.0")
   )
 
   def dependencySettings: Seq[Setting[_]] = Seq(
