@@ -68,7 +68,7 @@ git clean -fxd
 
 # copy documentation
 
-declare -r omnidoc="${base_dir}/target/scala-2.12/omnidoc"
+declare -r omnidoc="${base_dir}/target/scala-2.13/omnidoc"
 
 if [ ! -d $omnidoc ] ; then
   echo "Generated omnidoc not found at: $omnidoc"
