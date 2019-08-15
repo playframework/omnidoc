@@ -93,7 +93,6 @@ object OmnidocBuild {
   //Duplicate of sbt'd updateClassifiers for 'playdoc' specific use")
   val updatePlaydocClassifiers = TaskKey[(sbt.librarymanagement.UpdateReport, sbt.librarymanagement.UpdateReport)] ("updatePlaydocClassifiers")
 
-
   lazy val omnidoc = project
     .in(file("."))
     .enablePlugins(PlayLibrary, PlayReleaseBase)
@@ -132,7 +131,11 @@ object OmnidocBuild {
         )
         case _ => Nil
       }
-    }
+    },
+    libraryDependencies ++= Seq(
+      compilerPlugin("com.github.ghik" %% "silencer-plugin" % "1.4.2"),
+      "com.github.ghik" %% "silencer-lib" % "1.4.2" % Omnidoc.name
+    )
   )
 
   def releaseSettings: Seq[Setting[_]] = Seq(
