@@ -16,10 +16,10 @@ object OmnidocBuild {
 
   val snapshotVersionLabel = "2.8.x"
 
-  val playVersion              = sys.props.getOrElse("play.version",               "2.8.0-M3")
-  val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "5.0.0-M3")
-  val playJsonVersion          = sys.props.getOrElse("play-json.version",          "2.8.0-M4")
-  val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "5.0.0-M4")
+  val playVersion              = sys.props.getOrElse("play.version",               "2.8.0-M4")
+  val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "5.0.0-M4")
+  val playJsonVersion          = sys.props.getOrElse("play-json.version",          "2.8.0-M5")
+  val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "5.0.0-M5")
   val maybeTwirlVersion        = sys.props.get("twirl.version")
 
   // List Play artifacts so that they can be added as dependencies
@@ -93,7 +93,6 @@ object OmnidocBuild {
   //Duplicate of sbt'd updateClassifiers for 'playdoc' specific use")
   val updatePlaydocClassifiers = TaskKey[(sbt.librarymanagement.UpdateReport, sbt.librarymanagement.UpdateReport)] ("updatePlaydocClassifiers")
 
-
   lazy val omnidoc = project
     .in(file("."))
     .enablePlugins(PlayLibrary, PlayReleaseBase)
@@ -132,7 +131,11 @@ object OmnidocBuild {
         )
         case _ => Nil
       }
-    }
+    },
+    libraryDependencies ++= Seq(
+      compilerPlugin("com.github.ghik" %% "silencer-plugin" % "1.4.2"),
+      "com.github.ghik" %% "silencer-lib" % "1.4.2" % Omnidoc.name
+    )
   )
 
   def releaseSettings: Seq[Setting[_]] = Seq(
