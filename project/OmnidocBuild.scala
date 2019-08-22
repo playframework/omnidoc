@@ -18,7 +18,7 @@ object OmnidocBuild {
 
   val playVersion              = sys.props.getOrElse("play.version",               "2.7.3")
   val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "4.0.3")
-  val playEbeanVersion         = sys.props.getOrElse("play-ebean.version",         "5.0.2")
+  val playEbeanVersion         = sys.props.getOrElse("play-ebean.version",         "5.0.1")
   val playJsonVersion          = sys.props.getOrElse("play-json.version",          "2.7.4")
   val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "4.0.2")
   val maybeTwirlVersion        = sys.props.get("twirl.version")
@@ -118,8 +118,7 @@ object OmnidocBuild {
                                name := "play-omnidoc",
                             version := playVersion,
      playBuildRepoName in ThisBuild := "omnidoc",
-                       scalaVersion := "2.13.0",
-                 crossScalaVersions := Seq("2.13.0")
+                 crossScalaVersions := Seq(ScalaVersions.scala213, ScalaVersions.scala212, ScalaVersions.scala211)
   )
 
   def dependencySettings: Seq[Setting[_]] = Seq(
