@@ -100,9 +100,9 @@ object OmnidocBuild {
 
   def omnidocSettings: Seq[Setting[_]] =
     projectSettings ++
-    dependencySettings ++
     releaseSettings ++
     inConfig(Omnidoc) {
+      dependencySettings ++
       updateSettings ++
       extractSettings ++
       compilerReporterSettings ++
