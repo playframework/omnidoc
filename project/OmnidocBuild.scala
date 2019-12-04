@@ -16,7 +16,7 @@ object OmnidocBuild {
 
   val snapshotVersionLabel = "2.7.x"
 
-  val playVersion              = sys.props.getOrElse("play.version",               "2.7.3")
+  val playVersion              = sys.props.getOrElse("play.version",               "2.7.4")
   val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "4.0.3")
   val playJsonVersion          = sys.props.getOrElse("play-json.version",          "2.7.4")
   val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "4.0.2")
