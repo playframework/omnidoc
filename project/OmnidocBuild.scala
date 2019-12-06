@@ -16,12 +16,12 @@ object OmnidocBuild {
 
   val snapshotVersionLabel = "2.6.x"
 
-  val playVersion              = sys.props.getOrElse("play.version",               "2.6.24")
-  val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "3.1.2")
+  val playVersion              = sys.props.getOrElse("play.version",               "2.6.25")
+  val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "3.1.3")
   val anormVersion             = sys.props.getOrElse("anorm.version",              "2.5.3")
   val playEbeanVersion         = sys.props.getOrElse("play-ebean.version",         "4.1.3")
   val playJsonVersion          = sys.props.getOrElse("play-json.version",          "2.6.14")
-  val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "3.0.3")
+  val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "3.0.4")
   val maybeTwirlVersion        = sys.props.get("twirl.version")
 
  
@@ -119,6 +119,7 @@ object OmnidocBuild {
   def projectSettings: Seq[Setting[_]] = Seq(
                                name := "play-omnidoc",
                             version := playVersion,
+             resolvers in ThisBuild += Resolver.sonatypeRepo("releases"),
      playBuildRepoName in ThisBuild := "omnidoc"
   )
 
