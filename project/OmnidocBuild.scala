@@ -145,7 +145,7 @@ object OmnidocBuild {
         checkSnapshotDependencies,
         tagRelease,
         publishArtifacts,
-        releaseStepCommand("sonatypeRelease"),
+        releaseStepCommand("sonatypeBundleRelease"),
         pushChanges
       )
     }
