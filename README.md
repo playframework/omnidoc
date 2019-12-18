@@ -1,6 +1,8 @@
 # Omnidoc
 
-Omnidoc is an sbt build that adds to sbt's `mappings in (Compile, packageBin)` to aggregate source code and manuals produced within the Play ecosystem and produce a single deliverable which includes:
+Omnidoc is an sbt build that adds to sbt's `mappings in (Compile, packageBin)` to aggregate source code and manuals produced within the Play ecosystem and produce a single deliverable. This must not be confused with Interplay's [Omnidoc](https://github.com/playframework/interplay/blob/master/src/main/scala/interplay/Omnidoc.scala) which _simply_ adds some metadata on the `-source.jar` artifact of every Play library. 
+
+The resulting deliverable includes:
 
  * manual (also referred to as `playdoc`)
  * javadoc
