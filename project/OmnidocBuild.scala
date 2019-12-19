@@ -310,10 +310,27 @@ object OmnidocBuild {
     val label = "Play " + (if (isSnapshot.value) snapshotVersionLabel else version.value)
     Seq(
       "-windowtitle", label,
+      // Adding a user agent when we run `javadoc` is necessary to create link docs
+      // with Akka (at least, maybe play too) because doc.akka.io is served by Cloudflare
+      // which blocks requests without a User-Agent header.
+      "-J-Dhttp.agent=Play-Unidoc-Javadoc",
+      "-link",
+      "https://docs.oracle.com/javase/8/docs/api/",
+      "-link",
+      "https://doc.akka.io/japi/akka/2.6/",
+      "-link",
+      "https://doc.akka.io/japi/akka-http/current/",
       "-notimestamp",
       "-subpackages", "play",
       "-exclude", "play.api:play.core",
-      "-Xdoclint:none"
+      "-Xdoclint:none",
+      "-noqualifier",
+      "java.lang",
+      "-encoding",
+      "UTF-8",
+      "-source",
+      "8",
+      
     )
   }
 
