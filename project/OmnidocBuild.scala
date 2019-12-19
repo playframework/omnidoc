@@ -229,8 +229,7 @@ object OmnidocBuild {
 
     def updateClassifiersTask0(updateConfig: UpdateConfiguration): UpdateReport = {
       val s = streams.value
-      val is = ivySbt.value
-      val lm = IvyDependencyResolution(is.configuration)
+      val lm = dependencyResolution.value
       val classifiersModule = {
         val playModules = update.value.configuration(Omnidoc).toVector.flatMap(_.allModules.filter(playModuleFilter))
         GetClassifiersModule(projectID.value, None, playModules, Vector(Omnidoc), transitiveClassifiers.value.toVector)
