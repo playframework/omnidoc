@@ -33,16 +33,17 @@ object OmnidocBuild {
   // we would need to list them all here, but it is better if we
   // do so that we won't need to worry about the dependency tree.
   val playProjects = Seq(
-    "filters-helpers",
     "play",
     "play-ahc-ws",
     "play-akka-http-server",
     "play-akka-http2-support",
     "play-cache",
     "play-caffeine-cache",
+    "play-cluster-sharding",
     "play-ehcache",
     "play-guice",
     "play-java",
+    "play-java-cluster-sharding",
     "play-java-forms",
     "play-java-jdbc",
     "play-java-jpa",
