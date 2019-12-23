@@ -1,15 +1,11 @@
-import java.io.IOException
-
-import sbt._
-import sbt.io.Using
-import sbt.librarymanagement.{ GetClassifiersConfiguration, GetClassifiersModule, UpdateConfiguration }
+import sbt.{ Def, _ }
+import io.Using
+import sbt.librarymanagement.{ DependencyResolution, GetClassifiersConfiguration, GetClassifiersModule, UpdateConfiguration }
 import sbt.librarymanagement.ivy._
 import sbt.Artifact.SourceClassifier
 import sbt.Keys._
-
-import interplay._
 import interplay.PlayBuildBase.autoImport._
-
+import interplay._
 import sbtrelease.ReleasePlugin.autoImport._
 
 object OmnidocBuild {
@@ -59,13 +55,13 @@ object OmnidocBuild {
     "play-specs2",
     "play-streams",
     "play-test",
-    "play-ws"
+    "play-ws",
   )
 
   val excludeArtifacts = Seq(
     "build-link",
     "play-exceptions",
-    "play-netty-utils",
+    "play-netty-utils"
   )
 
   val playModules = Seq(
@@ -76,7 +72,9 @@ object OmnidocBuild {
     playOrganisation %% "play-slick-evolutions" % playSlickVersion
   )
 
-  val maybeTwirlModule = maybeTwirlVersion.map(v => playOrganisation %% "twirl-api" % v).toSeq
+  val maybeTwirlModule = maybeTwirlVersion.map { twirlVersion =>
+    playOrganisation %% "twirl-api" % twirlVersion
+  }.toSeq
 
   val externalModules = playModules ++ maybeTwirlModule
 
@@ -92,16 +90,14 @@ object OmnidocBuild {
   val sourceUrls       = TaskKey[Map[String, String]]("sourceUrls")
   val javadoc          = TaskKey[File]("javadoc")
   val scaladoc         = TaskKey[File]("scaladoc")
-  val playdoc          = TaskKey[File]("playdoc")
-
-  // Duplicate of sbt's updateClassifiers, for 'playdoc' specific use
-  val updatePlaydocClassifiers = taskKey[(UpdateReport, UpdateReport)]("")
+  val extractedPlaydoc         = TaskKey[File]("playdoc")
+  //Duplicate of sbt'd updateClassifiers for 'playdoc' specific use")
+  val updatePlaydocClassifiers = TaskKey[(sbt.librarymanagement.UpdateReport, sbt.librarymanagement.UpdateReport)] ("updatePlaydocClassifiers")
 
   lazy val omnidoc = project
     .in(file("."))
     .enablePlugins(PlayLibrary, PlayReleaseBase)
     .settings(omnidocSettings)
-    .configs(Omnidoc)
 
   def omnidocSettings: Seq[Setting[_]] =
     projectSettings ++
@@ -126,10 +122,18 @@ object OmnidocBuild {
 
   def dependencySettings: Seq[Setting[_]] = Seq(
       ivyConfigurations +=  Omnidoc,
-    libraryDependencies ++= playProjects.map(playOrganisation %% _ % playVersion % Omnidoc.name),
-    libraryDependencies ++= externalModules.map(_ % Omnidoc.name),
+    libraryDependencies ++= playProjects map (playOrganisation %% _ % playVersion % Omnidoc.name),
+    libraryDependencies ++= externalModules map (_ % Omnidoc.name),
+    libraryDependencies +=  playOrganisation %% "play-docs" % playVersion,
+    libraryDependencies ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, 10)) => Seq(
+          compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
+        )
+        case _ => Nil
+      }
+    },
     libraryDependencies ++= Seq(
-      playOrganisation %% "play-docs" % playVersion,
       compilerPlugin("com.github.ghik" %% "silencer-plugin" % "1.4.2"),
       "com.github.ghik" %% "silencer-lib" % "1.4.2" % Omnidoc.name
     )
@@ -164,8 +168,8 @@ object OmnidocBuild {
                 sources := extractedSources.value.map(_.dir),
              sourceUrls := getSourceUrls(extractedSources.value),
     dependencyClasspath := Classpaths.managedJars(configuration.value, classpathTypes.value, update.value),
-      target in playdoc := target.value / "playdoc",
-                playdoc := extractPlaydocs.value
+      target in extractedPlaydoc := target.value / "playdoc",
+                extractedPlaydoc := extractPlaydocs.value
   )
 
   def scaladocSettings: Seq[Setting[_]] = Defaults.docTaskSettings(scaladoc) ++ Seq(
@@ -206,8 +210,8 @@ object OmnidocBuild {
 
   def packageSettings: Seq[Setting[_]] = Seq(
     mappings in (Compile, packageBin) ++= {
-      def mapped(dir: File, path: String) = dir.allPaths.pair(Path.rebase(dir, path))
-      mapped(playdoc.value,  "play/docs/content") ++
+      def mapped(dir: File, path: String) = dir.allPaths pair Path.rebase(dir, path)
+      mapped(extractedPlaydoc.value,  "play/docs/content") ++
       mapped(scaladoc.value, "play/docs/content/api/scala") ++
       mapped(javadoc.value,  "play/docs/content/api/java")
     }
@@ -218,30 +222,39 @@ object OmnidocBuild {
     * Also redirects warnings to debug for any artifacts that can't be found.
     */
   private def updatePlaydocClassifiersTask: Def.Initialize[Task[(UpdateReport, UpdateReport)]] = Def.task {
-    val updateConfig0 = updateConfiguration.value.withMetadataDirectory(dependencyCacheDirectory.value)
-    val updateConfig1 = updateConfig0.withArtifactFilter(updateConfig0.artifactFilter.map(_.invert))
+    val filteredConfig: UpdateConfiguration = updateConfiguration.value
+      .withMetadataDirectory(dependencyCacheDirectory.value)
+      .withArtifactFilter(updateConfiguration.value.artifactFilter.map(af => af.withInverted(!af.inverted)))
+    val unfilteredConfig: UpdateConfiguration = updateConfiguration.value
+      .withMetadataDirectory(dependencyCacheDirectory.value)
 
     def updateClassifiersTask0(updateConfig: UpdateConfiguration): UpdateReport = {
-      val lm            = dependencyResolution.value
-      val omnidocReport = update.value.configuration(Omnidoc.toConfigRef)
-      val playModules   = omnidocReport.toVector.flatMap(_.allModules.filter(playModuleFilter))
-      val classifiers   = transitiveClassifiers.value.toVector
-      val playdocConfig = GetClassifiersConfiguration(
-        GetClassifiersModule(projectID.value, None, playModules, Vector(Omnidoc), classifiers),
-        Vector.empty,
-        updateConfig,
-        sourceArtifactTypes.value.toVector,
-        docArtifactTypes.value.toVector,
-      )
+      val s = streams.value
+      val is = ivySbt.value
+      val lm = IvyDependencyResolution(is.configuration)
+      val classifiersModule = {
+        val playModules = update.value.configuration(Omnidoc).toVector.flatMap(_.allModules.filter(playModuleFilter))
+        GetClassifiersModule(projectID.value, None, playModules, Vector(Omnidoc), transitiveClassifiers.value.toVector)
+      }
+      val srcTypes = sourceArtifactTypes.value
+      val docTypes = docArtifactTypes.value
       val uwConfig = (unresolvedWarningConfiguration in update).value
-      lm.updateClassifiers(playdocConfig, uwConfig, Vector.empty, streams.value.log).right.get
+      lm.updateClassifiers(
+        GetClassifiersConfiguration(classifiersModule, Vector.empty, updateConfig, srcTypes.toVector, docTypes.toVector),
+        uwConfig,
+        Vector.empty,
+        s.log
+      ) match {
+        case Left(_) => ???
+        case Right(ur) => ur
+      }
     }
 
-    // Current impl of Ivy resolvers in sbt or the underlying Ivy client don't support
+    // Current Impl of Ivy Resolvers in sbt or the underlying Ivy client don't support
     // the combination of `playdoc` classifiers with `sources` and `docs` so we
-    // run two passes with different (complementary) filters.
-    (updateClassifiersTask0(updateConfig1), updateClassifiersTask0(updateConfig0))
-  }.tag(Tags.Update, Tags.Network)
+    // run two passes with differentcomplementary) filter.
+    (updateClassifiersTask0(filteredConfig), updateClassifiersTask0(unfilteredConfig))
+  } tag(Tags.Update, Tags.Network)
 
   /**
    * Redirect logging above a certain level to debug.
@@ -258,10 +271,10 @@ object OmnidocBuild {
   def extractSources = Def.task {
     val log          = streams.value.log
     val targetDir    = (target in sources).value
-    val dependencies = updatePlaydocClassifiers.value._1.filter(artifactFilter(classifier = SourceClassifier)).toSeq
+    val dependencies = (updatePlaydocClassifiers.value._1 filter artifactFilter(classifier = SourceClassifier)).toSeq
     log.info("Extracting sources...")
     IO.delete(targetDir)
-    dependencies.map { case (conf, module, artifact, file) =>
+    dependencies map { case (conf, module, artifact, file) =>
       val name = s"${module.organization}-${module.name}-${module.revision}"
       val dir = targetDir / name
       log.debug(s"Extracting $name")
@@ -274,11 +287,11 @@ object OmnidocBuild {
 
   def extractPlaydocs = Def.task {
     val log          = streams.value.log
-    val targetDir    = (target in playdoc).value
-    val dependencies = updatePlaydocClassifiers.value._2.matching(artifactFilter(classifier = PlaydocClassifier))
+    val targetDir    = (target in extractedPlaydoc).value
+    val dependencies = updatePlaydocClassifiers.value._2 matching artifactFilter(classifier = PlaydocClassifier)
     log.info("Extracting playdocs...")
     IO.delete(targetDir)
-    dependencies.foreach { file =>
+    dependencies foreach { case file =>
       log.debug(s"Extracting $file")
       IO.unzip(file, targetDir, -"META-INF*")
     }
@@ -295,8 +308,7 @@ object OmnidocBuild {
   }
 
   def javadocOptions = Def.task {
-    val versionish = if (isSnapshot.value) snapshotVersionLabel else version.value
-    val label      = s"Play $versionish"
+    val label = "Play " + (if (isSnapshot.value) snapshotVersionLabel else version.value)
     Seq(
       "-windowtitle", label,
       "-notimestamp",
@@ -322,10 +334,10 @@ object OmnidocBuild {
       try {
         Option(jar.getManifest.getMainAttributes.getValue(SourceUrlKey))
       } catch {
-        case e: IOException =>
+        case e: java.io.IOException =>
           // JDK jar APIs refuse to attribute jar files in their exceptions
           // And vegemite seems to have a corrupt jar
-          throw new IOException(s"Error reading manifest attributes from $sourceJar", e)
+          throw new java.io.IOException(s"Error reading manifest attributes from $sourceJar", e)
       }
     }
   }
@@ -338,7 +350,7 @@ object OmnidocBuild {
 
   def rewriteSourceUrls(baseDir: File, sourceUrls: Map[String, String], prefix: String, suffix: String): File = {
     val files = baseDir.allPaths.filter(!_.isDirectory).get
-    files.foreach { file =>
+    files foreach { file =>
       val contents = IO.read(file)
       val newContents = SourceUrlRegex.replaceAllIn(contents, matched => {
         val key  = matched.group(1)
