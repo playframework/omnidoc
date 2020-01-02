@@ -117,7 +117,8 @@ object OmnidocBuild {
                             version := playVersion,
      playBuildRepoName in ThisBuild := "omnidoc",
                  crossScalaVersions := Seq(ScalaVersions.scala212, ScalaVersions.scala213),
-                          resolvers ++= Seq(Resolver.bintrayRepo("akka", "snapshots"), Resolver.sonatypeRepo("releases"))
+                          resolvers ++= Seq(Resolver.bintrayRepo("akka", "snapshots"), Resolver.sonatypeRepo("releases")),
+                        useCoursier := false, // so updatePlaydocClassifiers isn't empty
   )
 
   def dependencySettings: Seq[Setting[_]] = Seq(
@@ -322,7 +323,6 @@ object OmnidocBuild {
       "-link",
       "https://doc.akka.io/japi/akka-http/current/",
       "-notimestamp",
-      "-subpackages", "play",
       "-exclude", "play.api:play.core",
       "-Xdoclint:none",
       "-noqualifier",
