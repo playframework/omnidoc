@@ -313,7 +313,6 @@ object OmnidocBuild {
     Seq(
       "-windowtitle", label,
       "-notimestamp",
-      "-subpackages", "play",
       "-exclude", "play.api:play.core",
       "-Xdoclint:none"
     )
