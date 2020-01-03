@@ -321,7 +321,7 @@ object OmnidocBuild {
       "-link",
       "https://doc.akka.io/japi/akka/2.6/",
       "-link",
-      "https://doc.akka.io/japi/akka-http/current/",
+      "https://doc.akka.io/japi/akka-http/10.1/",
       "-notimestamp",
       "-exclude", "play.api:play.core",
       "-Xdoclint:none",
