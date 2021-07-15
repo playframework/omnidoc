@@ -119,7 +119,7 @@ object OmnidocBuild {
   def projectSettings: Seq[Setting[_]] = Seq(
                                name := "play-omnidoc",
                             version := playVersion,
-     playBuildRepoName in ThisBuild := "omnidoc",
+      ThisBuild / playBuildRepoName := "omnidoc",
                  crossScalaVersions := Seq(ScalaVersions.scala212, ScalaVersions.scala213),
                           resolvers ++= Seq(
                                           Resolver.bintrayRepo("akka", "snapshots"),
@@ -163,38 +163,38 @@ object OmnidocBuild {
 
   def extractSettings: Seq[Setting[_]] = Seq(
                  target := crossTarget.value / "omnidoc",
-      target in sources := target.value / "sources",
+       sources / target := target.value / "sources",
        extractedSources := extractSources.value,
                 sources := extractedSources.value.map(_.dir),
              sourceUrls := getSourceUrls(extractedSources.value),
     dependencyClasspath := Classpaths.managedJars(configuration.value, classpathTypes.value, update.value),
-      target in playdoc := target.value / "playdoc",
+       playdoc / target := target.value / "playdoc",
                 playdoc := extractPlaydocs.value
   )
 
   def scaladocSettings: Seq[Setting[_]] = Defaults.docTaskSettings(scaladoc) ++ Seq(
-          sources in scaladoc := {
+          scaladoc / sources := {
             val s = sources.value
             // Exclude a Play JSON file from the Scaladoc build because
             // it includes a macro from a third party library and we don't
             // want to deal with bringing extra libraries into Omnidoc.
             ((s ** "*.scala") --- (s ** "JsMacroImpl.scala")).get
           },
-           target in scaladoc := target.value / "scaladoc",
-    scalacOptions in scaladoc := scaladocOptions.value,
+            scaladoc / target := target.value / "scaladoc",
+     scaladoc / scalacOptions := scaladocOptions.value,
                      scaladoc := rewriteSourceUrls(scaladoc.value, sourceUrls.value, "/src/main/scala", ".scala")
   )
 
   def javadocSettings: Seq[Setting[_]] = Defaults.docTaskSettings(javadoc) ++ Seq(
-         sources in javadoc := (sources.value ** "*.java").get,
-          target in javadoc := target.value / "javadoc",
-    javacOptions in javadoc := javadocOptions.value
+         (javadoc / sources) := (sources.value ** "*.java").get,
+          (javadoc / target) := target.value / "javadoc",
+    (javadoc / javacOptions) := javadocOptions.value
   )
 
   private val compilerReporter = taskKey[xsbti.Reporter]("Experimental hook to listen (or send) compilation failure messages.")
 
   def compilerReporterSettings = Seq(
-    compilerReporter in compile := {
+    compile / compilerReporter := {
       new sbt.internal.server.LanguageServerReporter(
         maxErrors.value,
         streams.value.log,
@@ -209,7 +209,7 @@ object OmnidocBuild {
     }
 
   def packageSettings: Seq[Setting[_]] = Seq(
-    mappings in (Compile, packageBin) ++= {
+    Compile / packageBin / mappings ++= {
       def mapped(dir: File, path: String) = dir.allPaths.pair(Path.rebase(dir, path))
       mapped(playdoc.value,  "play/docs/content") ++
       mapped(scaladoc.value, "play/docs/content/api/scala") ++
@@ -237,7 +237,7 @@ object OmnidocBuild {
         sourceArtifactTypes.value.toVector,
         docArtifactTypes.value.toVector,
       )
-      val uwConfig = (unresolvedWarningConfiguration in update).value
+      val uwConfig = (update / unresolvedWarningConfiguration).value
       lm.updateClassifiers(playdocConfig, uwConfig, Vector.empty, streams.value.log).right.get
     }
 
@@ -261,7 +261,7 @@ object OmnidocBuild {
 
   def extractSources = Def.task {
     val log          = streams.value.log
-    val targetDir    = (target in sources).value
+    val targetDir    = (sources / target).value
     val dependencies = updatePlaydocClassifiers.value._1.filter(artifactFilter(classifier = SourceClassifier)).toSeq
     log.info("Extracting sources...")
     IO.delete(targetDir)
@@ -278,7 +278,7 @@ object OmnidocBuild {
 
   def extractPlaydocs = Def.task {
     val log          = streams.value.log
-    val targetDir    = (target in playdoc).value
+    val targetDir    = (playdoc / target).value
     val dependencies = updatePlaydocClassifiers.value._2.matching(artifactFilter(classifier = PlaydocClassifier))
     log.info("Extracting playdocs...")
     IO.delete(targetDir)
@@ -290,7 +290,7 @@ object OmnidocBuild {
   }
 
   def scaladocOptions = Def.task {
-    val sourcepath   = (target in sources).value.getAbsolutePath
+    val sourcepath   = (sources / target).value.getAbsolutePath
     val docSourceUrl = sourceUrlMarker("€{FILE_PATH}")
     Seq(
       "-sourcepath", sourcepath,
