@@ -9,7 +9,7 @@ import sbt.Keys._
 
 import interplay._
 import interplay.PlayBuildBase.autoImport._
-
+import xerial.sbt.Sonatype.autoImport.sonatypeProfileName
 import sbtrelease.ReleasePlugin.autoImport._
 
 object OmnidocBuild {
@@ -20,7 +20,7 @@ object OmnidocBuild {
 
   val snapshotVersionLabel = "2.8.x"
 
-  val playVersion              = sys.props.getOrElse("play.version",               "2.8.8")
+  val playVersion              = sys.props.getOrElse("play.version",               "2.8.9")
   val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "5.0.0")
   val playJsonVersion          = sys.props.getOrElse("play-json.version",          "2.8.1")
   val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "5.0.0")
@@ -138,6 +138,7 @@ object OmnidocBuild {
 
   def releaseSettings: Seq[Setting[_]] = Seq(
     releaseTagName := playVersion,
+    sonatypeProfileName := "com.typesafe.play",
     releaseProcess := {
       import ReleaseTransformations._
 
