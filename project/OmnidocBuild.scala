@@ -9,7 +9,7 @@ import sbt.Keys._
 
 import interplay._
 import interplay.PlayBuildBase.autoImport._
-
+import xerial.sbt.Sonatype.autoImport.sonatypeProfileName
 import sbtrelease.ReleasePlugin.autoImport._
 
 object OmnidocBuild {
@@ -141,6 +141,7 @@ object OmnidocBuild {
 
   def releaseSettings: Seq[Setting[_]] = Seq(
     releaseTagName := playVersion,
+    sonatypeProfileName := "com.typesafe.play",
     releaseProcess := {
       import ReleaseTransformations._
 
