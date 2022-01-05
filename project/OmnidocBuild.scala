@@ -121,7 +121,7 @@ object OmnidocBuild {
                             version := playVersion,
      playBuildRepoName in ThisBuild := "omnidoc",
                  crossScalaVersions := Seq(ScalaVersions.scala212, ScalaVersions.scala213),
-                          resolvers ++= Seq(Resolver.bintrayRepo("akka", "snapshots"), Resolver.sonatypeRepo("releases")),
+                          resolvers ++= Seq(Resolver.sonatypeRepo("snapshots"), Resolver.sonatypeRepo("releases")),
                         useCoursier := false, // so updatePlaydocClassifiers isn't empty
   )
 
