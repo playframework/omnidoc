@@ -11,8 +11,8 @@ matrix:
   fast_finish: true
 
 scala:
-  - 2.12.10
-  - 2.13.0
+  - 2.12.15
+  - 2.13.7
 
 script:
   # Check that we can actually build and package the library
