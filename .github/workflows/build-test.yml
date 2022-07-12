@@ -18,7 +18,7 @@ jobs:
     uses: playframework/.github/.github/workflows/cmd.yml@v2
     with:
       java: 11, 8
-      scala: 2.13.8, 2.12.15
+      scala: 2.13.8, 2.12.16
       cmd: sbt ++$MATRIX_SCALA publishLocal # Check that we can actually build and package the library
 
   finish:
