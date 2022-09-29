@@ -321,7 +321,7 @@ object OmnidocBuild {
       "-encoding",
       "UTF-8",
       "-source",
-      "8",
+      "11",
       
     )
   }
