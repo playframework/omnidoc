@@ -10,7 +10,6 @@ import sbt.Keys._
 import interplay._
 import interplay.PlayBuildBase.autoImport._
 import xerial.sbt.Sonatype.autoImport.sonatypeProfileName
-import sbtrelease.ReleasePlugin.autoImport._
 
 object OmnidocBuild {
 
@@ -99,14 +98,13 @@ object OmnidocBuild {
 
   lazy val omnidoc = project
     .in(file("."))
-    .enablePlugins(PlayLibrary, PlayReleaseBase)
+    .enablePlugins(PlayLibrary)
     .settings(omnidocSettings)
     .configs(Omnidoc)
 
   def omnidocSettings: Seq[Setting[_]] =
     projectSettings ++
     dependencySettings ++
-    releaseSettings ++
     inConfig(Omnidoc) {
       updateSettings ++
       extractSettings ++
@@ -136,24 +134,6 @@ object OmnidocBuild {
       compilerPlugin("com.github.ghik" %% "silencer-plugin" % "1.4.2"),
       "com.github.ghik" %% "silencer-lib" % "1.4.2" % Omnidoc.name
     )
-  )
-
-  def releaseSettings: Seq[Setting[_]] = Seq(
-    releaseTagName := playVersion,
-    sonatypeProfileName := "com.typesafe.play",
-    releaseProcess := {
-      import ReleaseTransformations._
-
-      // Since the version comes externally, we don't set or update it here.
-      Seq[ReleaseStep](
-        checkSnapshotDependencies,
-        tagRelease,
-        publishArtifacts,
-        releaseStepCommand("sonatypeBundleRelease"),
-        pushChanges
-      )
-    }
-
   )
 
   def updateSettings: Seq[Setting[_]] = Seq(
