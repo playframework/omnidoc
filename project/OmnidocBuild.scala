@@ -123,6 +123,7 @@ object OmnidocBuild {
                                           Resolver.sonatypeRepo("snapshots"),
                                           Resolver.sonatypeRepo("releases")),
                         useCoursier := false, // so updatePlaydocClassifiers isn't empty
+ updateSbtClassifiers / useCoursier := true, // https://github.com/sbt/sbt/issues/5263#issuecomment-626462593
   )
 
   def dependencySettings: Seq[Setting[_]] = Seq(
@@ -175,7 +176,7 @@ object OmnidocBuild {
 
   def compilerReporterSettings = Seq(
     compile / compilerReporter := {
-      new sbt.internal.server.LanguageServerReporter(
+      new sbt.internal.inc.LoggedReporter(
         maxErrors.value,
         streams.value.log,
         foldMappers(sourcePositionMappers.value)
