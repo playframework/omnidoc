@@ -10,7 +10,7 @@ import sbt.Keys._
 import interplay._
 import interplay.PlayBuildBase.autoImport._
 import xerial.sbt.Sonatype.autoImport.sonatypeProfileName
-import sbtrelease.ReleasePlugin.autoImport._
+import sbtdynver.DynVerPlugin.autoImport._
 
 object OmnidocBuild {
 
@@ -99,14 +99,13 @@ object OmnidocBuild {
 
   lazy val omnidoc = project
     .in(file("."))
-    .enablePlugins(PlayLibrary, PlayReleaseBase)
+    .enablePlugins(PlayLibrary)
     .settings(omnidocSettings)
     .configs(Omnidoc)
 
   def omnidocSettings: Seq[Setting[_]] =
     projectSettings ++
     dependencySettings ++
-    releaseSettings ++
     inConfig(Omnidoc) {
       updateSettings ++
       extractSettings ++
@@ -118,13 +117,17 @@ object OmnidocBuild {
 
   def projectSettings: Seq[Setting[_]] = Seq(
                                name := "play-omnidoc",
-                            version := playVersion,
       ThisBuild / playBuildRepoName := "omnidoc",
                  crossScalaVersions := Seq(ScalaVersions.scala212, ScalaVersions.scala213),
-                          resolvers ++= Seq(
-                                          Resolver.sonatypeRepo("snapshots"),
-                                          Resolver.sonatypeRepo("releases")),
+                          resolvers ++= Resolver.sonatypeOssRepos("snapshots") ++
+                                        Resolver.sonatypeOssRepos("releases"),
                         useCoursier := false, // so updatePlaydocClassifiers isn't empty
+ updateSbtClassifiers / useCoursier := true, // https://github.com/sbt/sbt/issues/5263#issuecomment-626462593
+       ThisBuild / dynverVTagPrefix := false, // Customise sbt-dynver's behaviour to make it work with tags which aren't v-prefixed
+                    Global / onLoad := (Global / onLoad).value.andThen { s =>
+                                         dynverAssertTagVersion.value // Sanity-check: assert that version comes from a tag (e.g. not a too-shallow clone)
+                                         s                            // https://github.com/dwijnand/sbt-dynver/#sanity-checking-the-version
+                                       },
   )
 
   def dependencySettings: Seq[Setting[_]] = Seq(
@@ -136,24 +139,6 @@ object OmnidocBuild {
       compilerPlugin("com.github.ghik" %% "silencer-plugin" % "1.4.2"),
       "com.github.ghik" %% "silencer-lib" % "1.4.2" % Omnidoc.name
     )
-  )
-
-  def releaseSettings: Seq[Setting[_]] = Seq(
-    releaseTagName := playVersion,
-    sonatypeProfileName := "com.typesafe.play",
-    releaseProcess := {
-      import ReleaseTransformations._
-
-      // Since the version comes externally, we don't set or update it here.
-      Seq[ReleaseStep](
-        checkSnapshotDependencies,
-        tagRelease,
-        publishArtifacts,
-        releaseStepCommand("sonatypeBundleRelease"),
-        pushChanges
-      )
-    }
-
   )
 
   def updateSettings: Seq[Setting[_]] = Seq(
@@ -195,12 +180,14 @@ object OmnidocBuild {
 
   def compilerReporterSettings = Seq(
     compile / compilerReporter := {
-      new sbt.internal.server.LanguageServerReporter(
+      new sbt.internal.inc.LoggedReporter(
         maxErrors.value,
         streams.value.log,
         foldMappers(sourcePositionMappers.value)
       )
     },
+    tastyFiles := (Compile / compile / tastyFiles).value, // not 100% sure but it seems to work
+    bspReporter := (Compile / compile / bspReporter).value, // same
   )
 
   private def foldMappers[A](mappers: Seq[A => Option[A]]): A => A =
@@ -321,7 +308,7 @@ object OmnidocBuild {
       "-encoding",
       "UTF-8",
       "-source",
-      "8",
+      "11",
       
     )
   }
