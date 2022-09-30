@@ -119,9 +119,8 @@ object OmnidocBuild {
                             version := playVersion,
       ThisBuild / playBuildRepoName := "omnidoc",
                  crossScalaVersions := Seq(ScalaVersions.scala212, ScalaVersions.scala213),
-                          resolvers ++= Seq(
-                                          Resolver.sonatypeRepo("snapshots"),
-                                          Resolver.sonatypeRepo("releases")),
+                          resolvers ++= Resolver.sonatypeOssRepos("snapshots") ++
+                                        Resolver.sonatypeOssRepos("releases"),
                         useCoursier := false, // so updatePlaydocClassifiers isn't empty
  updateSbtClassifiers / useCoursier := true, // https://github.com/sbt/sbt/issues/5263#issuecomment-626462593
   )
