@@ -181,6 +181,8 @@ object OmnidocBuild {
         foldMappers(sourcePositionMappers.value)
       )
     },
+    tastyFiles := (Compile / compile / tastyFiles).value, // not 100% sure but it seems to work
+    bspReporter := (Compile / compile / bspReporter).value, // same
   )
 
   private def foldMappers[A](mappers: Seq[A => Option[A]]): A => A =
