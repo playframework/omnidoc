@@ -10,6 +10,7 @@ import sbt.Keys._
 import interplay._
 import interplay.PlayBuildBase.autoImport._
 import xerial.sbt.Sonatype.autoImport.sonatypeProfileName
+import sbtdynver.DynVerPlugin.autoImport._
 
 object OmnidocBuild {
 
@@ -116,13 +117,17 @@ object OmnidocBuild {
 
   def projectSettings: Seq[Setting[_]] = Seq(
                                name := "play-omnidoc",
-                            version := playVersion,
       ThisBuild / playBuildRepoName := "omnidoc",
                  crossScalaVersions := Seq(ScalaVersions.scala212, ScalaVersions.scala213),
                           resolvers ++= Resolver.sonatypeOssRepos("snapshots") ++
                                         Resolver.sonatypeOssRepos("releases"),
                         useCoursier := false, // so updatePlaydocClassifiers isn't empty
  updateSbtClassifiers / useCoursier := true, // https://github.com/sbt/sbt/issues/5263#issuecomment-626462593
+       ThisBuild / dynverVTagPrefix := false, // Customise sbt-dynver's behaviour to make it work with tags which aren't v-prefixed
+                    Global / onLoad := (Global / onLoad).value.andThen { s =>
+                                         dynverAssertTagVersion.value // Sanity-check: assert that version comes from a tag (e.g. not a too-shallow clone)
+                                         s                            // https://github.com/dwijnand/sbt-dynver/#sanity-checking-the-version
+                                       },
   )
 
   def dependencySettings: Seq[Setting[_]] = Seq(
