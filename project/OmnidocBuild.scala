@@ -18,9 +18,9 @@ object OmnidocBuild {
   val scalaTestPlusPlayOrganisation = "org.scalatestplus.play"
   val playOrganisations = Seq(playOrganisation, scalaTestPlusPlayOrganisation)
 
-  val snapshotVersionLabel = "2.8.x"
+  val snapshotVersionLabel = "2.9.x"
 
-  val playVersion              = sys.props.getOrElse("play.version",               "2.8.16")
+  val playVersion              = sys.props.getOrElse("play.version",               "2.9.0-M2")
   val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "5.1.0")
   val playJsonVersion          = sys.props.getOrElse("play-json.version",          "2.9.3")
   val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "5.0.2")
