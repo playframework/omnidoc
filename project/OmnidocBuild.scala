@@ -18,12 +18,12 @@ object OmnidocBuild {
   val scalaTestPlusPlayOrganisation = "org.scalatestplus.play"
   val playOrganisations = Seq(playOrganisation, scalaTestPlusPlayOrganisation)
 
-  val snapshotVersionLabel = "2.8.x"
+  val snapshotVersionLabel = "2.9.x"
 
-  val playVersion              = sys.props.getOrElse("play.version",               "2.8.16")
-  val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "5.1.0")
-  val playJsonVersion          = sys.props.getOrElse("play-json.version",          "2.9.3")
-  val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "5.0.2")
+  val playVersion              = sys.props.getOrElse("play.version",               "2.9.0-M2")
+  val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "6.0.0-M1")
+  val playJsonVersion          = sys.props.getOrElse("play-json.version",          "2.10.0-RC6")
+  val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "5.1.0")
   val maybeTwirlVersion        = sys.props.get("twirl.version")
 
   // List Play artifacts so that they can be added as dependencies
@@ -118,7 +118,7 @@ object OmnidocBuild {
   def projectSettings: Seq[Setting[_]] = Seq(
                                name := "play-omnidoc",
       ThisBuild / playBuildRepoName := "omnidoc",
-                 crossScalaVersions := Seq(ScalaVersions.scala212, ScalaVersions.scala213),
+                 crossScalaVersions := Seq(ScalaVersions.scala213),
                           resolvers ++= Resolver.sonatypeOssRepos("snapshots") ++
                                         Resolver.sonatypeOssRepos("releases"),
                         useCoursier := false, // so updatePlaydocClassifiers isn't empty
