@@ -36,3 +36,7 @@ Omnidoc defines [5 tasks](https://github.com/playframework/omnidoc/blob/70f04533
 8. package `scaladoc` into `play/docs/content/api/scala`
 
 *NOTE:* all the paths above are relative to `target/scala-2.1x/` (for example `target/scala-2.12/`). 
+
+## Releasing a new version
+
+Omnidoc will be released as part of a Play Framework release. See https://github.com/playframework/.github/blob/main/RELEASING.md
