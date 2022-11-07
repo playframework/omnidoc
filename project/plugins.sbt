@@ -1,1 +1,1 @@
-addSbtPlugin("com.typesafe.play" % "interplay" % sys.props.getOrElse("interplay.version", "3.1.0-RC5"))
+addSbtPlugin("com.typesafe.play" % "interplay" % sys.props.getOrElse("interplay.version", "3.1.0-RC6"))
