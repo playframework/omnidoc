@@ -118,7 +118,7 @@ object OmnidocBuild {
   def projectSettings: Seq[Setting[_]] = Seq(
                                name := "play-omnidoc",
       ThisBuild / playBuildRepoName := "omnidoc",
-                 crossScalaVersions := Seq(ScalaVersions.scala213),
+                 crossScalaVersions := Seq(ScalaVersions.scala213, ScalaVersions.scala3),
                           resolvers ++= Resolver.sonatypeOssRepos("snapshots") ++
                                         Resolver.sonatypeOssRepos("releases"),
                         useCoursier := false, // so updatePlaydocClassifiers isn't empty
