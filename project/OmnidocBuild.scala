@@ -295,11 +295,11 @@ object OmnidocBuild {
       // which blocks requests without a User-Agent header.
       "-J-Dhttp.agent=Play-Unidoc-Javadoc",
       "-link",
-      "https://docs.oracle.com/javase/8/docs/api/",
+      "https://docs.oracle.com/en/java/javase/11/docs/api/",
       "-link",
       "https://doc.akka.io/japi/akka/2.6/",
       "-link",
-      "https://doc.akka.io/japi/akka-http/current/",
+      "https://doc.akka.io/japi/akka-http/10.2/",
       "-notimestamp",
       "-exclude", "play.api:play.core",
       "-Xdoclint:none",
