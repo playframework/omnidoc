@@ -23,7 +23,7 @@ object OmnidocBuild {
   val playVersion              = sys.props.getOrElse("play.version",               "2.9.0-M6")
   val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "6.0.0-M6")
   val playJsonVersion          = sys.props.getOrElse("play-json.version",          "2.10.0-RC9")
-  val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "5.1.0")
+  val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "5.2.0-M1")
   val maybeTwirlVersion        = sys.props.get("twirl.version")
 
   // List Play artifacts so that they can be added as dependencies
@@ -118,7 +118,7 @@ object OmnidocBuild {
   def projectSettings: Seq[Setting[_]] = Seq(
                                name := "play-omnidoc",
       ThisBuild / playBuildRepoName := "omnidoc",
-                 crossScalaVersions := Seq(ScalaVersions.scala213),
+                 crossScalaVersions := Seq(ScalaVersions.scala213, ScalaVersions.scala3),
                           resolvers ++= Resolver.sonatypeOssRepos("snapshots") ++
                                         Resolver.sonatypeOssRepos("releases"),
                         useCoursier := false, // so updatePlaydocClassifiers isn't empty
@@ -136,8 +136,6 @@ object OmnidocBuild {
     libraryDependencies ++= externalModules.map(_ % Omnidoc.name),
     libraryDependencies ++= Seq(
       playOrganisation %% "play-docs" % playVersion,
-      compilerPlugin("com.github.ghik" %% "silencer-plugin" % "1.4.2"),
-      "com.github.ghik" %% "silencer-lib" % "1.4.2" % Omnidoc.name
     )
   )
 
