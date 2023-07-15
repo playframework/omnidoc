@@ -335,7 +335,7 @@ object OmnidocBuild {
     }
   }
 
-  def sourceUrlMarker(path: String): String = s"http://%SOURCE;${path}%"
+  def sourceUrlMarker(path: String): String = s"http://_SOURCE;${path}_"
 
   def getSourceUrls(extracted: Seq[Extracted]): Map[String, String] = {
     (extracted flatMap { source => source.url map source.dir.name.-> }).toMap
