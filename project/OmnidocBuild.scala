@@ -136,8 +136,6 @@ object OmnidocBuild {
     libraryDependencies ++= externalModules.map(_ % Omnidoc.name),
     libraryDependencies ++= Seq(
       playOrganisation %% "play-docs" % playVersion,
-      compilerPlugin("com.github.ghik" %% "silencer-plugin" % "1.4.2"),
-      "com.github.ghik" %% "silencer-lib" % "1.4.2" % Omnidoc.name
     )
   )
 
