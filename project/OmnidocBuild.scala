@@ -60,6 +60,7 @@ object OmnidocBuild {
     "play-streams",
     "play-test",
     "play-ws",
+    "filters-helpers",
   )
 
   val excludeArtifacts = Seq(
