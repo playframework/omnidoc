@@ -163,9 +163,25 @@ object OmnidocBuild {
             // want to deal with bringing extra libraries into Omnidoc.
             ((s ** "*.scala") --- (s ** "JsMacroImpl.scala")).get
           },
+            Compile / sources := (scaladoc / sources).value, // Needed for Scala 3 compilation, see comments below
+Compile / dependencyClasspath := dependencyClasspath.value, // Needed for Scala 3 compilation, see comments below
             scaladoc / target := target.value / "scaladoc",
      scaladoc / scalacOptions := scaladocOptions.value,
-                     scaladoc := rewriteSourceUrls(scaladoc.value, sourceUrls.value, "/src/main/scala", ".scala")
+                     scaladoc := {
+                       if (ScalaArtifacts.isScala3(scalaVersion.value)) {
+                         // Scala 3 scaladoc ("dottydoc") does not support .scala files at the moment (unless Scala 2 scaladoc
+                         // which does). It requires .tasty and/or .jar files to generate the scala doc. That means, when on Scala 3,
+                         // we need to trigger a full compilation to generate those .tasty files.
+                         // (This requires to set Compile / dependencyClasspath and Compile / sources)
+                         // See
+                         // https://github.com/lampepfl/dotty/issues/11454#issuecomment-1636872223
+                         // https://github.com/lampepfl/dotty/pull/18215
+                         (Compile / compile).value
+                       } else {
+                         // No compilation needed for Scala 2
+                       }
+                       rewriteSourceUrls(scaladoc.value, sourceUrls.value, "/src/main/scala", ".scala")
+                     }
   )
 
   def javadocSettings: Seq[Setting[_]] = Defaults.docTaskSettings(javadoc) ++ Seq(
