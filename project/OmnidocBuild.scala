@@ -40,6 +40,7 @@ object OmnidocBuild {
     "play-cache",
     "play-caffeine-cache",
     "play-cluster-sharding",
+    "play-configuration",
     "play-ehcache",
     "play-guice",
     "play-java",
@@ -60,6 +61,7 @@ object OmnidocBuild {
     "play-streams",
     "play-test",
     "play-ws",
+    "filters-helpers",
   )
 
   val excludeArtifacts = Seq(
