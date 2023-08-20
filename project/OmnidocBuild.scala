@@ -61,11 +61,11 @@ object OmnidocBuild {
     "play-streams",
     "play-test",
     "play-ws",
-    "filters-helpers",
+    "play-filters-helpers",
   )
 
   val excludeArtifacts = Seq(
-    "build-link",
+    "play-build-link",
     "play-exceptions",
     "play-netty-utils",
   )
