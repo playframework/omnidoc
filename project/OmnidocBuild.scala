@@ -1,18 +1,16 @@
-import java.io.IOException
-
 import sbt._
-import sbt.io.Using
-import sbt.librarymanagement.{ GetClassifiersConfiguration, GetClassifiersModule, UpdateConfiguration }
-import sbt.librarymanagement.ivy._
 import sbt.Artifact.SourceClassifier
 import sbt.Keys._
-
-import interplay._
-import interplay.PlayBuildBase.autoImport._
-import xerial.sbt.Sonatype.autoImport.sonatypeProfileName
+import sbt.io.Using
+import sbt.librarymanagement.{GetClassifiersConfiguration, GetClassifiersModule, SemanticSelector, UpdateConfiguration, VersionNumber}
 import sbtdynver.DynVerPlugin.autoImport._
 
+import java.io.IOException
+
 object OmnidocBuild {
+
+  val scala213 = "2.13.12"
+  val scala3 = "3.3.1"
 
   val playOrganisation = "com.typesafe.play"
   val scalaTestPlusPlayOrganisation = "org.scalatestplus.play"
@@ -101,7 +99,6 @@ object OmnidocBuild {
 
   lazy val omnidoc = project
     .in(file("."))
-    .enablePlugins(PlayLibrary)
     .settings(omnidocSettings)
     .configs(Omnidoc)
 
@@ -119,8 +116,13 @@ object OmnidocBuild {
 
   def projectSettings: Seq[Setting[_]] = Seq(
                                name := "play-omnidoc",
-      ThisBuild / playBuildRepoName := "omnidoc",
-                 crossScalaVersions := Seq(ScalaVersions.scala213, ScalaVersions.scala3),
+                 crossScalaVersions := Seq(scala213, scala3),
+                       scalaVersion := (Seq(scala213, scala3)
+                          .filter(v => SemanticSelector(sys.props.get("scala.version").getOrElse(scala213)).matches(VersionNumber(v))) match {
+                            case Nil => sys.error("Unable to detect scalaVersion!")
+                            case Seq(version) => version
+                            case multiple => sys.error(s"Multiple crossScalaVersions matched query '${sys.props("scala.version")}': ${multiple.mkString(", ")}")
+                          }),
                           resolvers ++= Resolver.sonatypeOssRepos("snapshots") ++
                                         Resolver.sonatypeOssRepos("releases"),
                         useCoursier := false, // so updatePlaydocClassifiers isn't empty
