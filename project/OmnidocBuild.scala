@@ -13,8 +13,9 @@ object OmnidocBuild {
   val scala3 = "3.3.1"
 
   val playOrganisation = "org.playframework"
+  val twirlOrganisation = "org.playframework.twirl"
   val scalaTestPlusPlayOrganisation = "org.scalatestplus.play"
-  val playOrganisations = Seq(playOrganisation, scalaTestPlusPlayOrganisation)
+  val playOrganisations = Seq(playOrganisation, twirlOrganisation, scalaTestPlusPlayOrganisation)
 
   val snapshotVersionLabel = "3.0.x"
 
@@ -76,7 +77,7 @@ object OmnidocBuild {
     playOrganisation %% "play-slick-evolutions" % playSlickVersion
   )
 
-  val maybeTwirlModule = maybeTwirlVersion.map(v => playOrganisation %% "twirl-api" % v).toSeq
+  val maybeTwirlModule = maybeTwirlVersion.map(v => twirlOrganisation %% "twirl-api" % v).toSeq
 
   val externalModules = playModules ++ maybeTwirlModule
 
