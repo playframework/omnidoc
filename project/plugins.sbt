@@ -1,1 +1,1 @@
-addSbtPlugin("com.typesafe.play" % "interplay" % sys.props.getOrElse("interplay.version", "3.1.7"))
+addSbtPlugin("com.github.sbt" % "sbt-dynver" % "5.0.1")
