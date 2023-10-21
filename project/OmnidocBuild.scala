@@ -12,16 +12,16 @@ object OmnidocBuild {
   val scala213 = "2.13.12"
   val scala3 = "3.3.1"
 
-  val playOrganisation = "com.typesafe.play"
+  val playOrganisation = "org.playframework"
   val scalaTestPlusPlayOrganisation = "org.scalatestplus.play"
   val playOrganisations = Seq(playOrganisation, scalaTestPlusPlayOrganisation)
 
-  val snapshotVersionLabel = "2.9.x"
+  val snapshotVersionLabel = "3.0.x"
 
-  val playVersion              = sys.props.getOrElse("play.version",               "2.9.0-RC3")
-  val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "6.0.0-RC2")
-  val playJsonVersion          = sys.props.getOrElse("play-json.version",          "2.10.1")
-  val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "5.2.0-RC1")
+  val playVersion              = sys.props.getOrElse("play.version",               "3.0.0-M3")
+  val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "7.0.0-M1")
+  val playJsonVersion          = sys.props.getOrElse("play-json.version",          "3.0.0-M1")
+  val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "6.0.0-M1")
   val maybeTwirlVersion        = sys.props.get("twirl.version")
 
   // List Play artifacts so that they can be added as dependencies
@@ -33,8 +33,8 @@ object OmnidocBuild {
   val playProjects = Seq(
     "play",
     "play-ahc-ws",
-    "play-akka-http-server",
-    "play-akka-http2-support",
+    "play-pekko-http-server",
+    "play-pekko-http2-support",
     "play-cache",
     "play-caffeine-cache",
     "play-cluster-sharding",
@@ -308,16 +308,17 @@ Compile / dependencyClasspath := dependencyClasspath.value, // Needed for Scala 
     val label      = s"Play $versionish"
     Seq(
       "-windowtitle", label,
-      // Adding a user agent when we run `javadoc` is necessary to create link docs
+      // Adding a user agent when we run `javadoc` was necessary to create link docs
       // with Akka (at least, maybe play too) because doc.akka.io is served by Cloudflare
       // which blocks requests without a User-Agent header.
+      // Not sure we need that for Pekko however.
       "-J-Dhttp.agent=Play-Unidoc-Javadoc",
       "-link",
       "https://docs.oracle.com/en/java/javase/11/docs/api/",
       "-link",
-      "https://doc.akka.io/japi/akka/2.6/",
+      "https://pekko.apache.org/japi/pekko/1.0/",
       "-link",
-      "https://doc.akka.io/japi/akka-http/10.2/",
+      "https://pekko.apache.org/japi/pekko-http/1.0/",
       "-notimestamp",
       "-exclude", "play.api:play.core",
       "-Xdoclint:none",
