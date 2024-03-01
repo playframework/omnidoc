@@ -9,8 +9,8 @@ import java.io.IOException
 
 object OmnidocBuild {
 
-  val scala213 = "2.13.12"
-  val scala3 = "3.3.1"
+  val scala213 = "2.13.13"
+  val scala3 = "3.3.3"
 
   val playOrganisation = "com.typesafe.play"
   val scalaTestPlusPlayOrganisation = "org.scalatestplus.play"
@@ -18,10 +18,10 @@ object OmnidocBuild {
 
   val snapshotVersionLabel = "2.9.x"
 
-  val playVersion              = sys.props.getOrElse("play.version",               "2.9.1")
+  val playVersion              = sys.props.getOrElse("play.version",               "2.9.2")
   val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "6.0.1")
   val playJsonVersion          = sys.props.getOrElse("play-json.version",          "2.10.4")
-  val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "5.2.0-RC2")
+  val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "5.3.0-RC1")
   val maybeTwirlVersion        = sys.props.get("twirl.version")
 
   // List Play artifacts so that they can be added as dependencies
