@@ -328,7 +328,7 @@ Compile / dependencyClasspath := dependencyClasspath.value, // Needed for Scala 
       "-encoding",
       "UTF-8",
       "-source",
-      "11",
+      "17",
       
     )
   }
