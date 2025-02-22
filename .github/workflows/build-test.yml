@@ -17,7 +17,7 @@ jobs:
     name: Publish local
     uses: playframework/.github/.github/workflows/cmd.yml@v3
     with:
-      java: 17, 11
+      java: 21, 17, 11
       scala: 2.13.x, 3.x
       cmd: sbt ++$MATRIX_SCALA publishLocal # Check that we can actually build and package the library
 
