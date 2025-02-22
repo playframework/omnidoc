@@ -10,7 +10,7 @@ import java.io.IOException
 object OmnidocBuild {
 
   val scala213 = "2.13.16"
-  val scala3 = "3.3.4"
+  val scala3 = "3.3.5"
 
   val playOrganisation = "org.playframework"
   val twirlOrganisation = "org.playframework.twirl"
