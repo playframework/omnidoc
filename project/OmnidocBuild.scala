@@ -19,9 +19,9 @@ object OmnidocBuild {
 
   val snapshotVersionLabel = "3.0.x"
 
-  val playVersion              = sys.props.getOrElse("play.version",               "3.0.7")
+  val playVersion              = sys.props.getOrElse("play.version",               "3.0.8")
   val scalaTestPlusPlayVersion = sys.props.getOrElse("scalatestplus-play.version", "7.0.1")
-  val playJsonVersion          = sys.props.getOrElse("play-json.version",          "3.0.4")
+  val playJsonVersion          = sys.props.getOrElse("play-json.version",          "3.0.5")
   val playSlickVersion         = sys.props.getOrElse("play-slick.version",         "6.2.0")
   val maybeTwirlVersion        = sys.props.get("twirl.version")
 
@@ -124,8 +124,7 @@ object OmnidocBuild {
                             case Seq(version) => version
                             case multiple => sys.error(s"Multiple crossScalaVersions matched query '${sys.props("scala.version")}': ${multiple.mkString(", ")}")
                           }),
-                          resolvers ++= Resolver.sonatypeOssRepos("snapshots") ++
-                                        Resolver.sonatypeOssRepos("releases"),
+                          resolvers += Resolver.sonatypeCentralSnapshots,
                         useCoursier := false, // so updatePlaydocClassifiers isn't empty
  updateSbtClassifiers / useCoursier := true, // https://github.com/sbt/sbt/issues/5263#issuecomment-626462593
        ThisBuild / dynverVTagPrefix := false, // Customise sbt-dynver's behaviour to make it work with tags which aren't v-prefixed
